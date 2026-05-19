@@ -3,10 +3,7 @@
   "version": "1.0.0",
   "description": "Sistema de Gestao Empresarial - Financeiro e Agenda",
   "private": true,
-  "scripts": {"dev": "vite",
-  "build": "vite build",
-  "preview": "vite preview"
-}
+  "scripts": {
     "setup": "npm install && cd server && npm install && cd ../client && npm install",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "cd server && npm run dev",
@@ -15,10 +12,9 @@
     "start": "cd server && npm start"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2",
-    "vite": "^8.0.13"
+    "concurrently": "^9.1.2"
   },
   "dependencies": {
-    "next": "^16.2.6"
+    "react-router-dom": "^7.15.1"
   }
 }

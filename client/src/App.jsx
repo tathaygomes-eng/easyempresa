@@ -61,7 +61,14 @@ function App() {
     }
 
     if (!usuario) {
-        return <Login onLogin={handleLogin} />;
+        return (
+            <BrowserRouter>
+                <Routes>
+                    <Route path="/login" element={<Login onLogin={handleLogin} />} />
+                    <Route path="*" element={<Navigate to="/login" replace />} />
+                </Routes>
+            </BrowserRouter>
+        );
     }
 
     if (onboardingCompleto === null) {
@@ -69,7 +76,14 @@ function App() {
     }
 
     if (!onboardingCompleto) {
-        return <Onboarding usuario={usuario} onCompleto={handleOnboardingCompleto} />;
+        return (
+            <BrowserRouter>
+                <Routes>
+                    <Route path="/onboarding" element={<Onboarding usuario={usuario} onCompleto={handleOnboardingCompleto} />} />
+                    <Route path="*" element={<Navigate to="/onboarding" replace />} />
+                </Routes>
+            </BrowserRouter>
+        );
     }
 
     return (
@@ -84,6 +98,7 @@ function App() {
                     <Route path="/agenda/clientes" element={<Clientes />} />
                     <Route path="/agenda/clientes/:id" element={<ClienteDetalhes />} />
                     <Route path="/planos" element={<Planos usuario={usuario} />} />
+                    <Route path="/login" element={<Navigate to="/" replace />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </Layout>
