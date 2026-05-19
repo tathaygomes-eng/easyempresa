@@ -12,6 +12,10 @@
     "start": "cd server && npm start"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "concurrently": "^9.1.2",
+    "vite": "^8.0.13"
+  },
+  "dependencies": {
+    "next": "^16.2.6"
   }
 }
