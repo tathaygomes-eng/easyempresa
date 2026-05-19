@@ -1,0 +1,81 @@
+.relatorios-page {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.periodo-select {
+    display: flex;
+    gap: 8px;
+}
+
+.periodo-select select {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 13px;
+}
+
+.resumo-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.resumo-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.resumo-card span {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.resumo-card strong {
+    font-size: 24px;
+}
+
+.resumo-card.receita strong { color: var(--success); }
+.resumo-card.despesa strong { color: var(--danger); }
+.resumo-card.saldo strong { color: var(--primary); }
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.chart-panel {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    box-shadow: var(--shadow);
+}
+
+.chart-panel h3 {
+    font-size: 16px;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+}
+
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: var(--text-muted);
+}
+
+.empty-text {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 32px;
+}
