@@ -1,12 +1,21 @@
 import { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { getRelatorioMensal, getPorCategoria } from '../../services/relatoriosService';
 import { formatBRL } from '../../utils/formatters';
+import PlanGate from '../../components/ui/PlanGate';
 import './Relatorios.css';
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16', '#6B7280'];
 
 export default function Relatorios() {
+    return (
+        <PlanGate feature="relatorios">
+            <RelatoriosContent />
+        </PlanGate>
+    );
+}
+
+function RelatoriosContent() {
     const [periodo, setPeriodo] = useState({ mes: new Date().getMonth() + 1, ano: new Date().getFullYear() });
     const [dados, setDados] = useState(null);
     const [categorias, setCategorias] = useState([]);

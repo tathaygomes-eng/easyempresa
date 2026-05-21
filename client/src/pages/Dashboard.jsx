@@ -1,14 +1,20 @@
 import { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { useNavigate } from 'react-router-dom';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
 import { getResumo, getProximosAgendamentos, getTransacoesRecentes } from '../services/dashboardService';
-import { formatBRL, formatDate, formatDateTime, statusColors, statusLabels } from '../utils/formatters';
+import { formatBRL, formatDateTime, statusColors, statusLabels } from '../utils/formatters';
+import { getPlanoAtual, PLANOS, isUnlimited, getLimite } from '../config/planos';
 import './Dashboard.css';
 
 export default function Dashboard() {
+    const navigate = useNavigate();
     const [resumo, setResumo] = useState(null);
     const [agendamentos, setAgendamentos] = useState([]);
     const [transacoes, setTransacoes] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const planoKey = getPlanoAtual();
+    const planoInfo = PLANOS[planoKey];
 
     useEffect(() => {
         Promise.all([getResumo(), getProximosAgendamentos(), getTransacoesRecentes()])
@@ -21,7 +27,7 @@ export default function Dashboard() {
             .finally(() => setLoading(false));
     }, []);
 
-    if (loading) return <div className="loading">Carregando...</div>;
+    if (loading) return <LoadingSpinner fullScreen message="Carregando dashboard..." />;
 
     const cards = [
         { label: 'Saldo Total', value: resumo?.saldo, color: resumo?.saldo >= 0 ? 'var(--success)' : 'var(--danger)' },
@@ -32,6 +38,25 @@ export default function Dashboard() {
 
     return (
         <div className="dashboard">
+            {/* Banner do plano */}
+            {planoKey !== 'premium' && (
+                <div className="plan-banner" style={{ borderColor: planoInfo?.cor }}>
+                    <div className="plan-banner-info">
+                        <span className="plan-banner-name" style={{ color: planoInfo?.cor }}>
+                            Plano {planoInfo?.nome}
+                        </span>
+                        <span className="plan-banner-limits">
+                            {isUnlimited('transacoesMes') ? 'Transacoes ilimitadas' : `${getLimite('transacoesMes')} transacoes/mes`}
+                            {' · '}
+                            {isUnlimited('clientes') ? 'Clientes ilimitados' : `${getLimite('clientes')} clientes`}
+                        </span>
+                    </div>
+                    <button className="plan-banner-btn" onClick={() => navigate('/planos')}>
+                        Fazer upgrade
+                    </button>
+                </div>
+            )}
+
             <div className="dashboard-cards">
                 {cards.map(card => (
                     <div key={card.label} className="dash-card">

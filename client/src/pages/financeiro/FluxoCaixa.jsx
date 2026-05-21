@@ -1,10 +1,19 @@
 import { useState, useEffect } from 'react';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { getFluxoCaixa } from '../../services/relatoriosService';
 import { formatBRL } from '../../utils/formatters';
+import PlanGate from '../../components/ui/PlanGate';
 import './FluxoCaixa.css';
 
 export default function FluxoCaixa() {
+    return (
+        <PlanGate feature="fluxoCaixa">
+            <FluxoCaixaContent />
+        </PlanGate>
+    );
+}
+
+function FluxoCaixaContent() {
     const [dados, setDados] = useState(null);
     const [meses, setMeses] = useState(6);
     const [loading, setLoading] = useState(true);

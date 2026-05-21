@@ -1,20 +1,11 @@
 {
-  "name": "gestao-empresarial",
+  "name": "easy-empresa",
   "version": "1.0.0",
-  "description": "Sistema de Gestao Empresarial - Financeiro e Agenda",
+  "description": "EasyEmpresa - Gestao Empresarial para Pequenos Negocios",
   "private": true,
   "scripts": {
-    "setup": "npm install && cd server && npm install && cd ../client && npm install",
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
-    "dev:server": "cd server && npm run dev",
-    "dev:client": "cd client && npm run dev",
+    "dev": "cd client && npm run dev",
     "build": "cd client && npm run build",
-    "start": "cd server && npm start"
-  },
-  "devDependencies": {
-    "concurrently": "^9.1.2"
-  },
-  "dependencies": {
-    "react-router-dom": "^7.15.1"
+    "preview": "cd client && npm run preview"
   }
 }

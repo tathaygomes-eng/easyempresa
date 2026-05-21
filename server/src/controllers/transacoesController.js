@@ -5,8 +5,8 @@ exports.listar = (req, res, next) => {
         const { tipo, status, categoria_id, cliente_id, data_inicio, data_fim, page = 1, limit = 20 } = req.query;
         const offset = (page - 1) * limit;
 
-        const where = [];
-        const params = [];
+        const where = ['t.user_id = ?'];
+        const params = [req.userId];
 
         if (tipo) { where.push('t.tipo = ?'); params.push(tipo); }
         if (status) { where.push('t.status = ?'); params.push(status); }
@@ -15,7 +15,7 @@ exports.listar = (req, res, next) => {
         if (data_inicio) { where.push('t.data_transacao >= ?'); params.push(data_inicio); }
         if (data_fim) { where.push('t.data_transacao <= ?'); params.push(data_fim); }
 
-        const whereClause = where.length ? `WHERE ${where.join(' AND ')}` : '';
+        const whereClause = `WHERE ${where.join(' AND ')}`;
 
         const totalResult = queryOne(`SELECT COUNT(*) as count FROM transacoes t ${whereClause}`, ...params);
         const total = totalResult?.count || 0;
@@ -48,8 +48,8 @@ exports.detalhes = (req, res, next) => {
             FROM transacoes t
             LEFT JOIN categorias c ON t.categoria_id = c.id
             LEFT JOIN clientes cl ON t.cliente_id = cl.id
-            WHERE t.id = ?
-        `, id);
+            WHERE t.id = ? AND t.user_id = ?
+        `, id, req.userId);
 
         if (!transacao) {
             return res.status(404).json({ success: false, error: { message: 'Transacao nao encontrada.' } });
@@ -70,8 +70,8 @@ exports.criar = (req, res, next) => {
         }
 
         const result = run(
-            'INSERT INTO transacoes (tipo, descricao, valor, data_transacao, data_vencimento, status, categoria_id, cliente_id, forma_pagamento, observacoes, recorrente, recorrencia_tipo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            tipo, descricao, valor, data_transacao, data_vencimento, status || 'pendente', categoria_id || null, cliente_id || null, forma_pagamento, observacoes, recorrente || 0, recorrencia_tipo
+            'INSERT INTO transacoes (tipo, descricao, valor, data_transacao, data_vencimento, status, categoria_id, cliente_id, forma_pagamento, observacoes, recorrente, recorrencia_tipo, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            tipo, descricao, valor, data_transacao, data_vencimento, status || 'pendente', categoria_id || null, cliente_id || null, forma_pagamento, observacoes, recorrente || 0, recorrencia_tipo, req.userId
         );
 
         const transacao = queryOne(`
@@ -93,9 +93,14 @@ exports.atualizar = (req, res, next) => {
         const { id } = req.params;
         const { tipo, descricao, valor, data_transacao, data_vencimento, status, categoria_id, cliente_id, forma_pagamento, observacoes, recorrente, recorrencia_tipo } = req.body;
 
+        const existing = queryOne('SELECT id FROM transacoes WHERE id = ? AND user_id = ?', id, req.userId);
+        if (!existing) {
+            return res.status(404).json({ success: false, error: { message: 'Transacao nao encontrada.' } });
+        }
+
         run(
-            "UPDATE transacoes SET tipo = ?, descricao = ?, valor = ?, data_transacao = ?, data_vencimento = ?, status = ?, categoria_id = ?, cliente_id = ?, forma_pagamento = ?, observacoes = ?, recorrente = ?, recorrencia_tipo = ?, atualizado_em = datetime('now', 'localtime') WHERE id = ?",
-            tipo, descricao, valor, data_transacao, data_vencimento, status, categoria_id || null, cliente_id || null, forma_pagamento, observacoes, recorrente, recorrencia_tipo, id
+            "UPDATE transacoes SET tipo = ?, descricao = ?, valor = ?, data_transacao = ?, data_vencimento = ?, status = ?, categoria_id = ?, cliente_id = ?, forma_pagamento = ?, observacoes = ?, recorrente = ?, recorrencia_tipo = ?, atualizado_em = datetime('now', 'localtime') WHERE id = ? AND user_id = ?",
+            tipo, descricao, valor, data_transacao, data_vencimento, status, categoria_id || null, cliente_id || null, forma_pagamento, observacoes, recorrente, recorrencia_tipo, id, req.userId
         );
 
         const transacao = queryOne(`
@@ -115,7 +120,11 @@ exports.atualizar = (req, res, next) => {
 exports.excluir = (req, res, next) => {
     try {
         const { id } = req.params;
-        run('DELETE FROM transacoes WHERE id = ?', id);
+        const existing = queryOne('SELECT id FROM transacoes WHERE id = ? AND user_id = ?', id, req.userId);
+        if (!existing) {
+            return res.status(404).json({ success: false, error: { message: 'Transacao nao encontrada.' } });
+        }
+        run('DELETE FROM transacoes WHERE id = ? AND user_id = ?', id, req.userId);
         res.json({ success: true, message: 'Transacao excluida.' });
     } catch (err) {
         next(err);
@@ -131,7 +140,12 @@ exports.alterarStatus = (req, res, next) => {
             return res.status(400).json({ success: false, error: { message: 'Status invalido.' } });
         }
 
-        run("UPDATE transacoes SET status = ?, atualizado_em = datetime('now', 'localtime') WHERE id = ?", status, id);
+        const existing = queryOne('SELECT id FROM transacoes WHERE id = ? AND user_id = ?', id, req.userId);
+        if (!existing) {
+            return res.status(404).json({ success: false, error: { message: 'Transacao nao encontrada.' } });
+        }
+
+        run("UPDATE transacoes SET status = ?, atualizado_em = datetime('now', 'localtime') WHERE id = ? AND user_id = ?", status, id, req.userId);
 
         const transacao = queryOne('SELECT * FROM transacoes WHERE id = ?', id);
 

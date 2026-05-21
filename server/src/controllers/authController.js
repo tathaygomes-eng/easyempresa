@@ -2,7 +2,7 @@ const { query, queryOne, run } = require('../database/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'easyempresa-secret-key-2024';
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-only-fallback';
 
 exports.registrar = (req, res, next) => {
     try {

@@ -1,6 +1,9 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'easyempresa-secret-key-2024';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    console.error('AVISO: JWT_SECRET nao definido. Defina a variavel de ambiente JWT_SECRET.');
+}
 
 function auth(req, res, next) {
     const authHeader = req.headers.authorization;
@@ -12,7 +15,7 @@ function auth(req, res, next) {
     const token = authHeader.split(' ')[1];
 
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
+        const decoded = jwt.verify(token, JWT_SECRET || 'dev-only-fallback');
         req.userId = decoded.id;
         req.userPlano = decoded.plano;
         next();

@@ -10,30 +10,30 @@ exports.mensal = (req, res, next) => {
 
         const receitas = queryOne(`
             SELECT COALESCE(SUM(valor), 0) as total
-            FROM transacoes WHERE tipo = 'receita' AND data_transacao BETWEEN ? AND ?
-        `, inicio, fim);
+            FROM transacoes WHERE tipo = 'receita' AND data_transacao BETWEEN ? AND ? AND user_id = ?
+        `, inicio, fim, req.userId);
 
         const despesas = queryOne(`
             SELECT COALESCE(SUM(valor), 0) as total
-            FROM transacoes WHERE tipo = 'despesa' AND data_transacao BETWEEN ? AND ?
-        `, inicio, fim);
+            FROM transacoes WHERE tipo = 'despesa' AND data_transacao BETWEEN ? AND ? AND user_id = ?
+        `, inicio, fim, req.userId);
 
         const porCategoria = query(`
             SELECT c.nome, c.cor, t.tipo, SUM(t.valor) as total
             FROM transacoes t
             JOIN categorias c ON t.categoria_id = c.id
-            WHERE t.data_transacao BETWEEN ? AND ?
+            WHERE t.data_transacao BETWEEN ? AND ? AND t.user_id = ?
             GROUP BY c.id, t.tipo
             ORDER BY total DESC
-        `, inicio, fim);
+        `, inicio, fim, req.userId);
 
         const porDia = query(`
             SELECT data_transacao, tipo, SUM(valor) as total
             FROM transacoes
-            WHERE data_transacao BETWEEN ? AND ?
+            WHERE data_transacao BETWEEN ? AND ? AND user_id = ?
             GROUP BY data_transacao, tipo
             ORDER BY data_transacao
-        `, inicio, fim);
+        `, inicio, fim, req.userId);
 
         res.json({
             success: true,
@@ -63,20 +63,20 @@ exports.anual = (req, res, next) => {
                 tipo,
                 SUM(valor) as total
             FROM transacoes
-            WHERE data_transacao BETWEEN ? AND ?
+            WHERE data_transacao BETWEEN ? AND ? AND user_id = ?
             GROUP BY mes, tipo
             ORDER BY mes
-        `, inicio, fim);
+        `, inicio, fim, req.userId);
 
         const totalReceitas = queryOne(`
             SELECT COALESCE(SUM(valor), 0) as total
-            FROM transacoes WHERE tipo = 'receita' AND data_transacao BETWEEN ? AND ?
-        `, inicio, fim);
+            FROM transacoes WHERE tipo = 'receita' AND data_transacao BETWEEN ? AND ? AND user_id = ?
+        `, inicio, fim, req.userId);
 
         const totalDespesas = queryOne(`
             SELECT COALESCE(SUM(valor), 0) as total
-            FROM transacoes WHERE tipo = 'despesa' AND data_transacao BETWEEN ? AND ?
-        `, inicio, fim);
+            FROM transacoes WHERE tipo = 'despesa' AND data_transacao BETWEEN ? AND ? AND user_id = ?
+        `, inicio, fim, req.userId);
 
         res.json({
             success: true,
@@ -97,8 +97,8 @@ exports.porCategoria = (req, res, next) => {
     try {
         const { tipo, data_inicio, data_fim } = req.query;
 
-        const where = ['t.categoria_id IS NOT NULL'];
-        const params = [];
+        const where = ['t.categoria_id IS NOT NULL', 't.user_id = ?'];
+        const params = [req.userId];
 
         if (tipo) { where.push('t.tipo = ?'); params.push(tipo); }
         if (data_inicio) { where.push('t.data_transacao >= ?'); params.push(data_inicio); }
@@ -134,10 +134,10 @@ exports.fluxoCaixa = (req, res, next) => {
                 SUM(CASE WHEN tipo = 'receita' THEN valor ELSE 0 END) as receitas,
                 SUM(CASE WHEN tipo = 'despesa' THEN valor ELSE 0 END) as despesas
             FROM transacoes
-            WHERE data_transacao >= ?
+            WHERE data_transacao >= ? AND user_id = ?
             GROUP BY mes
             ORDER BY mes
-        `, inicio);
+        `, inicio, req.userId);
 
         const medias = queryOne(`
             SELECT
@@ -149,10 +149,10 @@ exports.fluxoCaixa = (req, res, next) => {
                     SUM(CASE WHEN tipo = 'receita' THEN valor ELSE 0 END) as receitas,
                     SUM(CASE WHEN tipo = 'despesa' THEN valor ELSE 0 END) as despesas
                 FROM transacoes
-                WHERE data_transacao >= ?
+                WHERE data_transacao >= ? AND user_id = ?
                 GROUP BY mes
             )
-        `, inicio);
+        `, inicio, req.userId);
 
         const projecoes = [];
         const hoje = new Date();
@@ -190,9 +190,9 @@ exports.pendencias = (req, res, next) => {
             FROM transacoes t
             LEFT JOIN categorias c ON t.categoria_id = c.id
             LEFT JOIN clientes cl ON t.cliente_id = cl.id
-            WHERE t.status IN ('pendente', 'atrasado')
+            WHERE t.status IN ('pendente', 'atrasado') AND t.user_id = ?
             ORDER BY t.data_vencimento ASC
-        `);
+        `, req.userId);
 
         const resumo = query(`
             SELECT
@@ -200,9 +200,9 @@ exports.pendencias = (req, res, next) => {
                 COUNT(*) as quantidade,
                 SUM(valor) as total
             FROM transacoes
-            WHERE status IN ('pendente', 'atrasado')
+            WHERE status IN ('pendente', 'atrasado') AND user_id = ?
             GROUP BY status
-        `);
+        `, req.userId);
 
         res.json({ success: true, data: { pendentes, resumo } });
     } catch (err) {

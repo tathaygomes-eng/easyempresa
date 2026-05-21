@@ -1,0 +1,45 @@
+.not-found {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: var(--bg-main);
+    padding: 20px;
+}
+
+.not-found-content {
+    text-align: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.not-found-code {
+    font-size: 96px;
+    font-weight: 800;
+    color: var(--primary-light);
+    line-height: 1;
+    margin-bottom: 12px;
+    letter-spacing: -4px;
+}
+
+.not-found-content h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.not-found-content p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+}
+
+.not-found-link {
+    display: inline-block;
+    text-decoration: none;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}

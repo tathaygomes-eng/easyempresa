@@ -4,7 +4,7 @@ import StepRamo from '../components/onboarding/StepRamo';
 import StepObjetivo from '../components/onboarding/StepObjetivo';
 import StepCategorias from '../components/onboarding/StepCategorias';
 import { completarOnboarding } from '../services/empresaService';
-import toast from 'react-hot-toast';
+import { useToast } from '../components/ui/Toast';
 
 const steps = [
   { id: 'boasvindas', titulo: 'Boas-vindas', componente: StepBoasVindas },
@@ -14,6 +14,7 @@ const steps = [
 ];
 
 export default function Onboarding({ usuario, onCompleto }) {
+  const toast = useToast();
   const [stepAtual, setStepAtual] = useState(0);
   const [salvando, setSalvando] = useState(false);
   const [dados, setDados] = useState({

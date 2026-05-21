@@ -127,6 +127,22 @@
     background: rgba(59, 130, 246, 0.1);
 }
 
+.nav-child.locked {
+    color: rgba(148, 163, 184, 0.5);
+    cursor: pointer;
+}
+
+.nav-child.locked:hover {
+    color: rgba(148, 163, 184, 0.7);
+    background: var(--sidebar-hover);
+}
+
+.nav-child {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
 .sidebar-user {
     display: flex;
     align-items: center;

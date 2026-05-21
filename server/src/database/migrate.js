@@ -1,11 +1,38 @@
 const fs = require('fs');
 const path = require('path');
-const { exec, queryOne } = require('./db');
+const { exec, queryOne, query, run } = require('./db');
 
 function migrate() {
     const schemaPath = path.join(__dirname, 'schema.sql');
     const schema = fs.readFileSync(schemaPath, 'utf-8');
     exec(schema);
+
+    // Adicionar user_id em tabelas existentes (migration)
+    const tabelas = ['clientes', 'transacoes', 'agendamentos', 'interacoes', 'categorias'];
+    for (const tabela of tabelas) {
+        try {
+            const columns = query(`PRAGMA table_info(${tabela})`);
+            const hasUserId = columns.some(c => c.name === 'user_id');
+            if (!hasUserId) {
+                run(`ALTER TABLE ${tabela} ADD COLUMN user_id INTEGER REFERENCES usuarios(id)`);
+                console.log(`Coluna user_id adicionada em ${tabela}.`);
+            }
+        } catch (e) {
+            // Tabela pode nao existir ainda, ignorar
+        }
+    }
+
+    // Criar indice em user_id
+    try {
+        exec('CREATE INDEX IF NOT EXISTS idx_clientes_user ON clientes(user_id)');
+        exec('CREATE INDEX IF NOT EXISTS idx_transacoes_user ON transacoes(user_id)');
+        exec('CREATE INDEX IF NOT EXISTS idx_agendamentos_user ON agendamentos(user_id)');
+        exec('CREATE INDEX IF NOT EXISTS idx_interacoes_user ON interacoes(user_id)');
+        exec('CREATE INDEX IF NOT EXISTS idx_categorias_user ON categorias(user_id)');
+    } catch (e) {
+        // Ignorar se indice ja existe
+    }
+
     console.log('Schema criado com sucesso.');
 }
 
@@ -37,10 +64,10 @@ function seed() {
     ];
 
     for (const [nome, cor, icone] of categoriasReceita) {
-        exec(`INSERT OR IGNORE INTO categorias (nome, tipo, cor, icone) VALUES ('${nome}', 'receita', '${cor}', '${icone}')`);
+        run('INSERT OR IGNORE INTO categorias (nome, tipo, cor, icone) VALUES (?, ?, ?, ?)', nome, 'receita', cor, icone);
     }
     for (const [nome, cor, icone] of categoriasDespesa) {
-        exec(`INSERT OR IGNORE INTO categorias (nome, tipo, cor, icone) VALUES ('${nome}', 'despesa', '${cor}', '${icone}')`);
+        run('INSERT OR IGNORE INTO categorias (nome, tipo, cor, icone) VALUES (?, ?, ?, ?)', nome, 'despesa', cor, icone);
     }
 
     console.log('Categorias padrao criadas com sucesso.');

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useToast } from '../../components/ui/Toast';
 import { listarTransacoes, criarTransacao, atualizarTransacao, excluirTransacao, alterarStatusTransacao } from '../../services/transacoesService';
 import { listarCategorias } from '../../services/categoriasService';
 import { listarClientes } from '../../services/clientesService';
@@ -11,6 +12,7 @@ const emptyForm = {
 };
 
 export default function Transacoes() {
+    const toast = useToast();
     const [transacoes, setTransacoes] = useState([]);
     const [categorias, setCategorias] = useState([]);
     const [clientes, setClientes] = useState([]);
@@ -39,7 +41,7 @@ export default function Transacoes() {
         e.preventDefault();
         const data = { ...form, valor: parseFloat(form.valor), categoria_id: form.categoria_id || null, cliente_id: form.cliente_id || null };
         const promise = editingId ? atualizarTransacao(editingId, data) : criarTransacao(data);
-        promise.then(() => { setShowModal(false); setEditingId(null); setForm(emptyForm); fetchData(); }).catch(err => alert(err.message));
+        promise.then(() => { setShowModal(false); setEditingId(null); setForm(emptyForm); fetchData(); toast.success(editingId ? 'Transacao atualizada!' : 'Transacao criada!'); }).catch(err => toast.error(err.message));
     };
 
     const handleEdit = (t) => {
@@ -50,12 +52,12 @@ export default function Transacoes() {
 
     const handleDelete = (id) => {
         if (confirm('Deseja excluir esta transacao?')) {
-            excluirTransacao(id).then(fetchData).catch(err => alert(err.message));
+            excluirTransacao(id).then(() => { fetchData(); toast.success('Transacao excluida!'); }).catch(err => toast.error(err.message));
         }
     };
 
     const handleStatusChange = (id, status) => {
-        alterarStatusTransacao(id, status).then(fetchData).catch(err => alert(err.message));
+        alterarStatusTransacao(id, status).then(() => { fetchData(); toast.success('Status atualizado!'); }).catch(err => toast.error(err.message));
     };
 
     return (

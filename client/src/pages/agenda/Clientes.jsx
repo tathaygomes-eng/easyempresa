@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../../components/ui/Toast';
 import { listarClientes, criarCliente, atualizarCliente, desativarCliente } from '../../services/clientesService';
 import './Clientes.css';
 
@@ -7,6 +8,7 @@ const emptyForm = { nome: '', email: '', telefone: '', cpf_cnpj: '', endereco: '
 
 export default function Clientes() {
     const navigate = useNavigate();
+    const toast = useToast();
     const [clientes, setClientes] = useState([]);
     const [search, setSearch] = useState('');
     const [pagination, setPagination] = useState({ page: 1, totalPages: 1 });
@@ -28,7 +30,7 @@ export default function Clientes() {
     const handleSubmit = (e) => {
         e.preventDefault();
         const promise = editingId ? atualizarCliente(editingId, form) : criarCliente(form);
-        promise.then(() => { setShowModal(false); setEditingId(null); setForm(emptyForm); fetchData(); }).catch(err => alert(err.message));
+        promise.then(() => { setShowModal(false); setEditingId(null); setForm(emptyForm); fetchData(); toast.success(editingId ? 'Cliente atualizado!' : 'Cliente criado!'); }).catch(err => toast.error(err.message));
     };
 
     const handleEdit = (c) => {
@@ -39,7 +41,7 @@ export default function Clientes() {
 
     const handleDelete = (id) => {
         if (confirm('Deseja desativar este cliente?')) {
-            desativarCliente(id).then(fetchData).catch(err => alert(err.message));
+            desativarCliente(id).then(() => { fetchData(); toast.success('Cliente desativado!'); }).catch(err => toast.error(err.message));
         }
     };
 

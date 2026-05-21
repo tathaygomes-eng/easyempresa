@@ -1,25 +1,29 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useState } from 'react';
+import { hasFeature, getPlanoAtual, PLANOS } from '../../config/planos';
 import './Sidebar.css';
+
+const LockIcon = () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+);
 
 const menuItems = [
     { path: '/', label: 'Dashboard', icon: 'grid' },
     {
         label: 'Financeiro',
         icon: 'dollar',
-        badge: 'PREMIUM',
         children: [
-            { path: '/financeiro/transacoes', label: 'Transacoes' },
-            { path: '/financeiro/relatorios', label: 'Relatorios' },
-            { path: '/financeiro/fluxo-caixa', label: 'Fluxo de Caixa' },
+            { path: '/financeiro/transacoes', label: 'Transacoes', feature: 'transacoes' },
+            { path: '/financeiro/relatorios', label: 'Relatorios', feature: 'relatorios' },
+            { path: '/financeiro/fluxo-caixa', label: 'Fluxo de Caixa', feature: 'fluxoCaixa' },
         ]
     },
     {
         label: 'Agenda',
         icon: 'calendar',
         children: [
-            { path: '/agenda/calendario', label: 'Calendario' },
-            { path: '/agenda/clientes', label: 'Clientes' },
+            { path: '/agenda/calendario', label: 'Calendario', feature: 'calendario' },
+            { path: '/agenda/clientes', label: 'Clientes', feature: 'clientes' },
         ]
     },
     { path: '/planos', label: 'Planos', icon: 'crown' }
@@ -36,6 +40,8 @@ const icons = {
 export default function Sidebar({ usuario, onLogout }) {
     const location = useLocation();
     const [openMenus, setOpenMenus] = useState({});
+    const planoKey = getPlanoAtual();
+    const planoInfo = PLANOS[planoKey];
 
     const toggleMenu = (label) => {
         setOpenMenus(prev => ({ ...prev, [label]: !prev[label] }));
@@ -55,10 +61,14 @@ export default function Sidebar({ usuario, onLogout }) {
                 </div>
                 {usuario && (
                     <div className="sidebar-user">
-                        <div className="user-avatar">{usuario.nome?.charAt(0)?.toUpperCase()}</div>
+                        <div className="user-avatar" style={{ background: planoInfo?.cor || '#3B82F6' }}>
+                            {usuario.nome?.charAt(0)?.toUpperCase()}
+                        </div>
                         <div className="user-info">
                             <span className="user-name">{usuario.nome}</span>
-                            <span className="user-plan">{usuario.plano === 'premium' ? 'Premium' : usuario.plano === 'basico' ? 'Basico' : 'Gratuito'}</span>
+                            <span className="user-plan" style={{ color: planoInfo?.cor || '#94A3B8' }}>
+                                {planoInfo?.nome || 'Gratuito'}
+                            </span>
                         </div>
                     </div>
                 )}
@@ -81,16 +91,23 @@ export default function Sidebar({ usuario, onLogout }) {
                                 >
                                     {icons[item.icon]}
                                     <span>{item.label}</span>
-                                    {item.badge && <span className="nav-badge">{item.badge}</span>}
                                     <svg className={`nav-arrow ${openMenus[item.label] ? 'open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
                                 </button>
                                 {(openMenus[item.label] || isActive(item)) && (
                                     <div className="nav-children">
-                                        {item.children.map(child => (
-                                            <NavLink key={child.path} to={child.path} className={({ isActive }) => `nav-child ${isActive ? 'active' : ''}`}>
-                                                {child.label}
-                                            </NavLink>
-                                        ))}
+                                        {item.children.map(child => {
+                                            const locked = child.feature && !hasFeature(child.feature);
+                                            return (
+                                                <NavLink
+                                                    key={child.path}
+                                                    to={locked ? '/planos' : child.path}
+                                                    className={({ isActive }) => `nav-child ${isActive && !locked ? 'active' : ''} ${locked ? 'locked' : ''}`}
+                                                >
+                                                    <span>{child.label}</span>
+                                                    {locked && <LockIcon />}
+                                                </NavLink>
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </>

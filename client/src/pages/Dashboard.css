@@ -4,6 +4,50 @@
     gap: 24px;
 }
 
+.plan-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: 16px 24px;
+    border-left: 4px solid;
+    box-shadow: var(--shadow);
+}
+
+.plan-banner-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.plan-banner-name {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.plan-banner-limits {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.plan-banner-btn {
+    padding: 8px 20px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.plan-banner-btn:hover {
+    background: var(--primary-dark);
+}
+
 .loading {
     display: flex;
     align-items: center;

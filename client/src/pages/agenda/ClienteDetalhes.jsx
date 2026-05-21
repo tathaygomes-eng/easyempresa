@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useToast } from '../../components/ui/Toast';
 import { getCliente, listarInteracoes, criarInteracao, listarTransacoesCliente } from '../../services/clientesService';
 import { formatBRL, formatDate, formatDateTime, statusColors, statusLabels } from '../../utils/formatters';
 import './ClienteDetalhes.css';
@@ -7,6 +8,7 @@ import './ClienteDetalhes.css';
 export default function ClienteDetalhes() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const toast = useToast();
     const [cliente, setCliente] = useState(null);
     const [interacoes, setInteracoes] = useState([]);
     const [transacoes, setTransacoes] = useState([]);
@@ -29,7 +31,7 @@ export default function ClienteDetalhes() {
         e.preventDefault();
         criarInteracao(id, interacaoForm)
             .then(() => { setShowInteracaoModal(false); setInteracaoForm({ tipo: 'nota', descricao: '', data_interacao: new Date().toISOString().slice(0, 16) }); listarInteracoes(id).then(res => setInteracoes(res.data)); })
-            .catch(err => alert(err.message));
+            .catch(err => toast.error(err.message));
     };
 
     const tipoLabels = { reuniao: 'Reuniao', ligacao: 'Ligacao', email: 'Email', whatsapp: 'WhatsApp', nota: 'Nota', outro: 'Outro' };

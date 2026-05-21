@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useToast } from '../../components/ui/Toast';
 import { listarAgendamentos, criarAgendamento, atualizarAgendamento, excluirAgendamento, alterarStatusAgendamento } from '../../services/agendamentosService';
 import { listarClientes } from '../../services/clientesService';
 import { formatDateTime, statusColors, statusLabels } from '../../utils/formatters';
@@ -10,6 +11,7 @@ const emptyForm = {
 };
 
 export default function Calendario() {
+    const toast = useToast();
     const [agendamentos, setAgendamentos] = useState([]);
     const [clientes, setClientes] = useState([]);
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -52,7 +54,7 @@ export default function Calendario() {
     const handleSubmit = (e) => {
         e.preventDefault();
         const promise = editingId ? atualizarAgendamento(editingId, form) : criarAgendamento(form);
-        promise.then(() => { setShowModal(false); setEditingId(null); setForm(emptyForm); fetchData(); }).catch(err => alert(err.message));
+        promise.then(() => { setShowModal(false); setEditingId(null); setForm(emptyForm); fetchData(); toast.success(editingId ? 'Agendamento atualizado!' : 'Agendamento criado!'); }).catch(err => toast.error(err.message));
     };
 
     const handleEdit = (a) => {
@@ -63,7 +65,7 @@ export default function Calendario() {
 
     const handleDelete = (id) => {
         if (confirm('Deseja excluir este agendamento?')) {
-            excluirAgendamento(id).then(fetchData).catch(err => alert(err.message));
+            excluirAgendamento(id).then(() => { fetchData(); toast.success('Agendamento excluido!'); }).catch(err => toast.error(err.message));
         }
     };
 

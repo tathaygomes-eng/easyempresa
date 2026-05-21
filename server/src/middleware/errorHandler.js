@@ -4,20 +4,27 @@ function errorHandler(err, req, res, next) {
     if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
         return res.status(400).json({
             success: false,
-            error: { message: 'Registro duplicado.', details: err.message }
+            error: { message: 'Registro duplicado.' }
         });
     }
 
     if (err.code === 'SQLITE_CONSTRAINT_FOREIGNKEY') {
         return res.status(400).json({
             success: false,
-            error: { message: 'Referencia invalida.', details: err.message }
+            error: { message: 'Referencia invalida.' }
         });
     }
 
-    res.status(err.status || 500).json({
+    const status = err.status || 500;
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    res.status(status).json({
         success: false,
-        error: { message: err.message || 'Erro interno do servidor.' }
+        error: {
+            message: status === 500 && isProduction
+                ? 'Erro interno do servidor.'
+                : (err.message || 'Erro interno do servidor.')
+        }
     });
 }
 

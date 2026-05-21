@@ -155,11 +155,12 @@ exports.completarOnboarding = (req, res, next) => {
     if (categorias_personalizadas && categorias_personalizadas.length > 0) {
       for (const cat of categorias_personalizadas) {
         run(
-          'INSERT OR IGNORE INTO categorias (nome, tipo, cor, icone) VALUES (?, ?, ?, ?)',
+          'INSERT OR IGNORE INTO categorias (nome, tipo, cor, icone, user_id) VALUES (?, ?, ?, ?, ?)',
           cat.nome,
           'despesa',
           cat.cor || '#6B7280',
-          cat.icone || 'tag'
+          cat.icone || 'tag',
+          req.userId
         );
       }
     }

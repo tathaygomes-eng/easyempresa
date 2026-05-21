@@ -13,13 +13,15 @@ CREATE TABLE IF NOT EXISTS usuarios (
 
 CREATE TABLE IF NOT EXISTS categorias (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nome TEXT NOT NULL UNIQUE,
+    nome TEXT NOT NULL,
     tipo TEXT NOT NULL CHECK(tipo IN ('receita', 'despesa')),
     cor TEXT DEFAULT '#6B7280',
     icone TEXT DEFAULT 'tag',
     ativo INTEGER DEFAULT 1,
+    user_id INTEGER,
     criado_em TEXT DEFAULT (datetime('now', 'localtime')),
-    atualizado_em TEXT DEFAULT (datetime('now', 'localtime'))
+    atualizado_em TEXT DEFAULT (datetime('now', 'localtime')),
+    FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS clientes (
@@ -33,8 +35,10 @@ CREATE TABLE IF NOT EXISTS clientes (
     estado TEXT,
     observacoes TEXT,
     ativo INTEGER DEFAULT 1,
+    user_id INTEGER,
     criado_em TEXT DEFAULT (datetime('now', 'localtime')),
-    atualizado_em TEXT DEFAULT (datetime('now', 'localtime'))
+    atualizado_em TEXT DEFAULT (datetime('now', 'localtime')),
+    FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS transacoes (
@@ -51,10 +55,12 @@ CREATE TABLE IF NOT EXISTS transacoes (
     observacoes TEXT,
     recorrente INTEGER DEFAULT 0,
     recorrencia_tipo TEXT CHECK(recorrencia_tipo IN ('mensal', 'semanal', 'anual', NULL)),
+    user_id INTEGER,
     criado_em TEXT DEFAULT (datetime('now', 'localtime')),
     atualizado_em TEXT DEFAULT (datetime('now', 'localtime')),
     FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE SET NULL,
-    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE SET NULL
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE SET NULL,
+    FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS agendamentos (
@@ -71,9 +77,11 @@ CREATE TABLE IF NOT EXISTS agendamentos (
     lembrete_minutos INTEGER DEFAULT 30,
     cor TEXT DEFAULT '#3B82F6',
     recorrente INTEGER DEFAULT 0,
+    user_id INTEGER,
     criado_em TEXT DEFAULT (datetime('now', 'localtime')),
     atualizado_em TEXT DEFAULT (datetime('now', 'localtime')),
-    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE SET NULL
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE SET NULL,
+    FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS interacoes (
@@ -82,8 +90,10 @@ CREATE TABLE IF NOT EXISTS interacoes (
     tipo TEXT NOT NULL CHECK(tipo IN ('reuniao', 'ligacao', 'email', 'whatsapp', 'nota', 'outro')),
     descricao TEXT NOT NULL,
     data_interacao TEXT NOT NULL,
+    user_id INTEGER,
     criado_em TEXT DEFAULT (datetime('now', 'localtime')),
-    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS empresa_config (
@@ -104,6 +114,11 @@ CREATE INDEX IF NOT EXISTS idx_transacoes_status ON transacoes(status);
 CREATE INDEX IF NOT EXISTS idx_transacoes_tipo ON transacoes(tipo);
 CREATE INDEX IF NOT EXISTS idx_transacoes_categoria ON transacoes(categoria_id);
 CREATE INDEX IF NOT EXISTS idx_transacoes_cliente ON transacoes(cliente_id);
+CREATE INDEX IF NOT EXISTS idx_transacoes_user ON transacoes(user_id);
 CREATE INDEX IF NOT EXISTS idx_agendamentos_data ON agendamentos(data_inicio);
 CREATE INDEX IF NOT EXISTS idx_agendamentos_cliente ON agendamentos(cliente_id);
+CREATE INDEX IF NOT EXISTS idx_agendamentos_user ON agendamentos(user_id);
 CREATE INDEX IF NOT EXISTS idx_interacoes_cliente ON interacoes(cliente_id);
+CREATE INDEX IF NOT EXISTS idx_interacoes_user ON interacoes(user_id);
+CREATE INDEX IF NOT EXISTS idx_clientes_user ON clientes(user_id);
+CREATE INDEX IF NOT EXISTS idx_categorias_user ON categorias(user_id);

@@ -1,0 +1,137 @@
+// Configuracao centralizada de planos e limites
+
+export const PLANOS = {
+    gratuito: {
+        nome: 'Gratuito',
+        preco: 0,
+        precoFormatado: 'Gratis',
+        cor: '#6B7280',
+        descricao: 'Para quem esta comecando',
+        limites: {
+            transacoesMes: 30,
+            clientes: 10,
+            agendamentosMes: 15,
+        },
+        features: {
+            dashboard: true,
+            transacoes: true,
+            calendario: true,
+            clientes: true,
+            relatorios: false,
+            fluxoCaixa: false,
+            exportar: false,
+            categoriasCustom: false,
+            suportePrioritario: false,
+        },
+        beneficios: [
+            { texto: 'Ate 30 transacoes/mes', incluido: true },
+            { texto: 'Ate 10 clientes', incluido: true },
+            { texto: 'Ate 15 agendamentos/mes', incluido: true },
+            { texto: 'Dashboard basico', incluido: true },
+            { texto: 'Calendario de agenda', incluido: true },
+            { texto: 'Relatorios avancados', incluido: false },
+            { texto: 'Fluxo de caixa', incluido: false },
+            { texto: 'Categorias personalizadas', incluido: false },
+            { texto: 'Exportar dados', incluido: false },
+            { texto: 'Suporte prioritario', incluido: false },
+        ]
+    },
+    basico: {
+        nome: 'Basico',
+        preco: 9.90,
+        precoFormatado: 'R$ 9',
+        centavos: ',90',
+        cor: '#10B981',
+        descricao: 'Para negocios em crescimento',
+        limites: {
+            transacoesMes: 200,
+            clientes: 50,
+            agendamentosMes: 100,
+        },
+        features: {
+            dashboard: true,
+            transacoes: true,
+            calendario: true,
+            clientes: true,
+            relatorios: true,
+            fluxoCaixa: false,
+            exportar: false,
+            categoriasCustom: true,
+            suportePrioritario: false,
+        },
+        beneficios: [
+            { texto: 'Ate 200 transacoes/mes', incluido: true },
+            { texto: 'Ate 50 clientes', incluido: true },
+            { texto: 'Ate 100 agendamentos/mes', incluido: true },
+            { texto: 'Dashboard completo', incluido: true },
+            { texto: 'Calendario de agenda', incluido: true },
+            { texto: 'Relatorios com graficos', incluido: true, destaque: true },
+            { texto: 'Categorias personalizadas', incluido: true, destaque: true },
+            { texto: 'Fluxo de caixa', incluido: false },
+            { texto: 'Exportar dados', incluido: false },
+            { texto: 'Suporte prioritario', incluido: false },
+        ]
+    },
+    premium: {
+        nome: 'Premium',
+        preco: 49.90,
+        precoFormatado: 'R$ 49',
+        centavos: ',90',
+        cor: '#3B82F6',
+        descricao: 'Para quem quer crescer de verdade',
+        badge: 'MELHOR CUSTO-BENEFICIO',
+        limites: {
+            transacoesMes: Infinity,
+            clientes: Infinity,
+            agendamentosMes: Infinity,
+        },
+        features: {
+            dashboard: true,
+            transacoes: true,
+            calendario: true,
+            clientes: true,
+            relatorios: true,
+            fluxoCaixa: true,
+            exportar: true,
+            categoriasCustom: true,
+            suportePrioritario: true,
+        },
+        beneficios: [
+            { texto: 'Transacoes ilimitadas', incluido: true, destaque: true },
+            { texto: 'Clientes ilimitados', incluido: true, destaque: true },
+            { texto: 'Agendamentos ilimitados', incluido: true, destaque: true },
+            { texto: 'Dashboard completo', incluido: true },
+            { texto: 'Calendario de agenda', incluido: true },
+            { texto: 'Relatorios avancados', incluido: true },
+            { texto: 'Fluxo de caixa com projecao', incluido: true, destaque: true },
+            { texto: 'Categorias personalizadas', incluido: true },
+            { texto: 'Exportar dados (CSV)', incluido: true, destaque: true },
+            { texto: 'Suporte prioritario', incluido: true, destaque: true },
+        ]
+    }
+};
+
+export function getPlanoAtual() {
+    try {
+        const user = JSON.parse(localStorage.getItem('usuario'));
+        return user?.plano || 'gratuito';
+    } catch {
+        return 'gratuito';
+    }
+}
+
+export function getPlanoConfig() {
+    return PLANOS[getPlanoAtual()] || PLANOS.gratuito;
+}
+
+export function hasFeature(feature) {
+    return getPlanoConfig().features[feature] === true;
+}
+
+export function getLimite(tipo) {
+    return getPlanoConfig().limites[tipo];
+}
+
+export function isUnlimited(tipo) {
+    return getPlanoConfig().limites[tipo] === Infinity;
+}

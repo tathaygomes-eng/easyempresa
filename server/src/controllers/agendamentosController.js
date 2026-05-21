@@ -4,15 +4,15 @@ exports.listar = (req, res, next) => {
     try {
         const { data_inicio, data_fim, cliente_id, status } = req.query;
 
-        const where = [];
-        const params = [];
+        const where = ['a.user_id = ?'];
+        const params = [req.userId];
 
         if (data_inicio) { where.push('a.data_inicio >= ?'); params.push(data_inicio); }
         if (data_fim) { where.push('a.data_inicio <= ?'); params.push(data_fim); }
         if (cliente_id) { where.push('a.cliente_id = ?'); params.push(cliente_id); }
         if (status) { where.push('a.status = ?'); params.push(status); }
 
-        const whereClause = where.length ? `WHERE ${where.join(' AND ')}` : '';
+        const whereClause = `WHERE ${where.join(' AND ')}`;
 
         const data = query(`
             SELECT a.*, c.nome as cliente_nome
@@ -35,8 +35,8 @@ exports.detalhes = (req, res, next) => {
             SELECT a.*, c.nome as cliente_nome
             FROM agendamentos a
             LEFT JOIN clientes c ON a.cliente_id = c.id
-            WHERE a.id = ?
-        `, id);
+            WHERE a.id = ? AND a.user_id = ?
+        `, id, req.userId);
 
         if (!agendamento) {
             return res.status(404).json({ success: false, error: { message: 'Agendamento nao encontrado.' } });
@@ -57,8 +57,8 @@ exports.criar = (req, res, next) => {
         }
 
         const result = run(
-            'INSERT INTO agendamentos (titulo, descricao, data_inicio, data_fim, dia_inteiro, cliente_id, local, status, lembrete, lembrete_minutos, cor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            titulo, descricao, data_inicio, data_fim, dia_inteiro || 0, cliente_id || null, local, status || 'agendado', lembrete !== undefined ? lembrete : 1, lembrete_minutos || 30, cor || '#3B82F6'
+            'INSERT INTO agendamentos (titulo, descricao, data_inicio, data_fim, dia_inteiro, cliente_id, local, status, lembrete, lembrete_minutos, cor, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            titulo, descricao, data_inicio, data_fim, dia_inteiro || 0, cliente_id || null, local, status || 'agendado', lembrete !== undefined ? lembrete : 1, lembrete_minutos || 30, cor || '#3B82F6', req.userId
         );
 
         const agendamento = queryOne(`
@@ -79,9 +79,14 @@ exports.atualizar = (req, res, next) => {
         const { id } = req.params;
         const { titulo, descricao, data_inicio, data_fim, dia_inteiro, cliente_id, local, status, lembrete, lembrete_minutos, cor } = req.body;
 
+        const existing = queryOne('SELECT id FROM agendamentos WHERE id = ? AND user_id = ?', id, req.userId);
+        if (!existing) {
+            return res.status(404).json({ success: false, error: { message: 'Agendamento nao encontrado.' } });
+        }
+
         run(
-            "UPDATE agendamentos SET titulo = ?, descricao = ?, data_inicio = ?, data_fim = ?, dia_inteiro = ?, cliente_id = ?, local = ?, status = ?, lembrete = ?, lembrete_minutos = ?, cor = ?, atualizado_em = datetime('now', 'localtime') WHERE id = ?",
-            titulo, descricao, data_inicio, data_fim, dia_inteiro, cliente_id || null, local, status, lembrete, lembrete_minutos, cor, id
+            "UPDATE agendamentos SET titulo = ?, descricao = ?, data_inicio = ?, data_fim = ?, dia_inteiro = ?, cliente_id = ?, local = ?, status = ?, lembrete = ?, lembrete_minutos = ?, cor = ?, atualizado_em = datetime('now', 'localtime') WHERE id = ? AND user_id = ?",
+            titulo, descricao, data_inicio, data_fim, dia_inteiro, cliente_id || null, local, status, lembrete, lembrete_minutos, cor, id, req.userId
         );
 
         const agendamento = queryOne(`
@@ -100,7 +105,11 @@ exports.atualizar = (req, res, next) => {
 exports.excluir = (req, res, next) => {
     try {
         const { id } = req.params;
-        run('DELETE FROM agendamentos WHERE id = ?', id);
+        const existing = queryOne('SELECT id FROM agendamentos WHERE id = ? AND user_id = ?', id, req.userId);
+        if (!existing) {
+            return res.status(404).json({ success: false, error: { message: 'Agendamento nao encontrado.' } });
+        }
+        run('DELETE FROM agendamentos WHERE id = ? AND user_id = ?', id, req.userId);
         res.json({ success: true, message: 'Agendamento excluido.' });
     } catch (err) {
         next(err);
@@ -116,7 +125,12 @@ exports.alterarStatus = (req, res, next) => {
             return res.status(400).json({ success: false, error: { message: 'Status invalido.' } });
         }
 
-        run("UPDATE agendamentos SET status = ?, atualizado_em = datetime('now', 'localtime') WHERE id = ?", status, id);
+        const existing = queryOne('SELECT id FROM agendamentos WHERE id = ? AND user_id = ?', id, req.userId);
+        if (!existing) {
+            return res.status(404).json({ success: false, error: { message: 'Agendamento nao encontrado.' } });
+        }
+
+        run("UPDATE agendamentos SET status = ?, atualizado_em = datetime('now', 'localtime') WHERE id = ? AND user_id = ?", status, id, req.userId);
 
         const agendamento = queryOne('SELECT * FROM agendamentos WHERE id = ?', id);
 
@@ -138,8 +152,9 @@ exports.lembretes = (req, res, next) => {
             WHERE a.lembrete = 1
             AND a.data_inicio BETWEEN ? AND ?
             AND a.status IN ('agendado', 'confirmado')
+            AND a.user_id = ?
             ORDER BY a.data_inicio ASC
-        `, agora, em30min);
+        `, agora, em30min, req.userId);
 
         res.json({ success: true, data: agendamentos });
     } catch (err) {
