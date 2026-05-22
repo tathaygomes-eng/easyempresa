@@ -20,12 +20,12 @@ export default function Planos() {
     const handleAssinar = async (planoKey) => {
         if (planoKey === planoAtual) return;
 
-  if (planoKey === "pro") {
+  if (planoKey === "premium") {
     window.open("https://pay.kirvano.com/0b135afa-4b8f-490c-8c1c-c70ecffa8d5e", "_blank");
     return;
   }
 
-  if (planoKey === "business") {
+  if (planoKey === "basico") {
     window.open("https://pay.kirvano.com/c5a42b3d-f997-4438-bf82-7e927b125390", "_blank");
     return;
   }
