@@ -1,34 +1,34 @@
-import { find } from '../db/localDb';
+import { supabase } from '../supabase';
 
-function getCurrentUserId() {
-    try {
-        const user = JSON.parse(localStorage.getItem('usuario'));
-        return user?.id;
-    } catch {
-        return null;
-    }
+async function getCurrentUserId() {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.id;
 }
 
-export function getRelatorioMensal(params = {}) {
-    const userId = getCurrentUserId();
+export async function getRelatorioMensal(params = {}) {
+    const userId = await getCurrentUserId();
     const now = new Date();
     const mes = params.mes || String(now.getMonth() + 1).padStart(2, '0');
     const ano = params.ano || String(now.getFullYear());
     const dataRef = `${ano}-${mes}`;
+    const dataInicio = `${dataRef}-01`;
+    const dataFim = `${dataRef}-31`;
 
-    const transacoes = find('transacoes', t =>
-        t.user_id === userId && t.data_transacao?.startsWith(dataRef)
-    );
+    const { data: transacoes } = await supabase
+        .from('transacoes')
+        .select('*, categorias(nome, cor)')
+        .eq('user_id', userId)
+        .gte('data_transacao', dataInicio)
+        .lte('data_transacao', dataFim);
 
-    const receitas = transacoes.filter(t => t.tipo === 'receita').reduce((s, t) => s + t.valor, 0);
-    const despesas = transacoes.filter(t => t.tipo === 'despesa').reduce((s, t) => s + t.valor, 0);
-
-    const categorias = find('categorias', () => true);
+    const todas = transacoes || [];
+    const receitas = todas.filter(t => t.tipo === 'receita').reduce((s, t) => s + t.valor, 0);
+    const despesas = todas.filter(t => t.tipo === 'despesa').reduce((s, t) => s + t.valor, 0);
 
     const porCategoriaMap = {};
-    transacoes.forEach(t => {
+    todas.forEach(t => {
         if (!t.categoria_id) return;
-        const cat = categorias.find(c => c.id === t.categoria_id);
+        const cat = t.categorias;
         if (!cat) return;
         const key = `${t.categoria_id}_${t.tipo}`;
         if (!porCategoriaMap[key]) porCategoriaMap[key] = { nome: cat.nome, cor: cat.cor, tipo: t.tipo, total: 0 };
@@ -36,13 +36,13 @@ export function getRelatorioMensal(params = {}) {
     });
 
     const porDiaMap = {};
-    transacoes.forEach(t => {
+    todas.forEach(t => {
         const key = `${t.data_transacao}_${t.tipo}`;
         if (!porDiaMap[key]) porDiaMap[key] = { data_transacao: t.data_transacao, tipo: t.tipo, total: 0 };
         porDiaMap[key].total += t.valor;
     });
 
-    return Promise.resolve({
+    return {
         success: true,
         data: {
             periodo: dataRef,
@@ -52,29 +52,35 @@ export function getRelatorioMensal(params = {}) {
             porCategoria: Object.values(porCategoriaMap).sort((a, b) => b.total - a.total),
             porDia: Object.values(porDiaMap).sort((a, b) => a.data_transacao.localeCompare(b.data_transacao))
         }
-    });
+    };
 }
 
-export function getRelatorioAnual(params = {}) {
-    const userId = getCurrentUserId();
+export async function getRelatorioAnual(params = {}) {
+    const userId = await getCurrentUserId();
     const ano = params.ano || new Date().getFullYear();
+    const dataInicio = `${ano}-01-01`;
+    const dataFim = `${ano}-12-31`;
 
-    const transacoes = find('transacoes', t =>
-        t.user_id === userId && t.data_transacao?.startsWith(String(ano))
-    );
+    const { data: transacoes } = await supabase
+        .from('transacoes')
+        .select('tipo, valor, data_transacao')
+        .eq('user_id', userId)
+        .gte('data_transacao', dataInicio)
+        .lte('data_transacao', dataFim);
 
-    const totalReceitas = transacoes.filter(t => t.tipo === 'receita').reduce((s, t) => s + t.valor, 0);
-    const totalDespesas = transacoes.filter(t => t.tipo === 'despesa').reduce((s, t) => s + t.valor, 0);
+    const todas = transacoes || [];
+    const totalReceitas = todas.filter(t => t.tipo === 'receita').reduce((s, t) => s + t.valor, 0);
+    const totalDespesas = todas.filter(t => t.tipo === 'despesa').reduce((s, t) => s + t.valor, 0);
 
     const porMesMap = {};
-    transacoes.forEach(t => {
+    todas.forEach(t => {
         const mes = t.data_transacao?.slice(5, 7);
         const key = `${mes}_${t.tipo}`;
         if (!porMesMap[key]) porMesMap[key] = { mes, tipo: t.tipo, total: 0 };
         porMesMap[key].total += t.valor;
     });
 
-    return Promise.resolve({
+    return {
         success: true,
         data: {
             ano: Number(ano),
@@ -83,42 +89,53 @@ export function getRelatorioAnual(params = {}) {
             saldo: totalReceitas - totalDespesas,
             porMes: Object.values(porMesMap).sort((a, b) => a.mes.localeCompare(b.mes))
         }
-    });
+    };
 }
 
-export function getPorCategoria(params = {}) {
-    const userId = getCurrentUserId();
-    let transacoes = find('transacoes', t => t.user_id === userId && t.categoria_id !== null);
+export async function getPorCategoria(params = {}) {
+    const userId = await getCurrentUserId();
 
-    if (params.tipo) transacoes = transacoes.filter(t => t.tipo === params.tipo);
-    if (params.data_inicio) transacoes = transacoes.filter(t => t.data_transacao >= params.data_inicio);
-    if (params.data_fim) transacoes = transacoes.filter(t => t.data_transacao <= params.data_fim);
+    let query = supabase
+        .from('transacoes')
+        .select('tipo, valor, categoria_id, categorias(nome, cor)')
+        .eq('user_id', userId)
+        .not('categoria_id', 'is', null);
 
-    const categorias = find('categorias', () => true);
+    if (params.tipo) query = query.eq('tipo', params.tipo);
+    if (params.data_inicio) query = query.gte('data_transacao', params.data_inicio);
+    if (params.data_fim) query = query.lte('data_transacao', params.data_fim);
+
+    const { data: transacoes } = await query;
+    const todas = transacoes || [];
+
     const grouped = {};
-
-    transacoes.forEach(t => {
-        const cat = categorias.find(c => c.id === t.categoria_id);
+    todas.forEach(t => {
+        const cat = t.categorias;
         if (!cat) return;
         if (!grouped[t.categoria_id]) grouped[t.categoria_id] = { nome: cat.nome, cor: cat.cor, tipo: t.tipo, total: 0, quantidade: 0 };
         grouped[t.categoria_id].total += t.valor;
         grouped[t.categoria_id].quantidade++;
     });
 
-    return Promise.resolve({ success: true, data: Object.values(grouped).sort((a, b) => b.total - a.total) });
+    return { success: true, data: Object.values(grouped).sort((a, b) => b.total - a.total) };
 }
 
-export function getFluxoCaixa(params = {}) {
-    const userId = getCurrentUserId();
+export async function getFluxoCaixa(params = {}) {
+    const userId = await getCurrentUserId();
     const meses = parseInt(params.meses) || 6;
     const dataInicio = new Date();
     dataInicio.setMonth(dataInicio.getMonth() - meses);
     const inicio = dataInicio.toISOString().slice(0, 10);
 
-    const transacoes = find('transacoes', t => t.user_id === userId && t.data_transacao >= inicio);
+    const { data: transacoes } = await supabase
+        .from('transacoes')
+        .select('tipo, valor, data_transacao')
+        .eq('user_id', userId)
+        .gte('data_transacao', inicio);
 
+    const todas = transacoes || [];
     const porMes = {};
-    transacoes.forEach(t => {
+    todas.forEach(t => {
         const mes = t.data_transacao?.slice(0, 7);
         if (!porMes[mes]) porMes[mes] = { mes, receitas: 0, despesas: 0 };
         if (t.tipo === 'receita') porMes[mes].receitas += t.valor;
@@ -126,7 +143,6 @@ export function getFluxoCaixa(params = {}) {
     });
 
     const historico = Object.values(porMes).sort((a, b) => a.mes.localeCompare(b.mes));
-
     const mediaReceita = historico.length > 0 ? historico.reduce((s, m) => s + m.receitas, 0) / historico.length : 0;
     const mediaDespesa = historico.length > 0 ? historico.reduce((s, m) => s + m.despesas, 0) / historico.length : 0;
 
@@ -142,31 +158,34 @@ export function getFluxoCaixa(params = {}) {
         });
     }
 
-    return Promise.resolve({
+    return {
         success: true,
         data: { historico, projecoes, medias: { receita: mediaReceita, despesa: mediaDespesa } }
-    });
+    };
 }
 
-export function getPendencias() {
-    const userId = getCurrentUserId();
-    const categorias = find('categorias', () => true);
-    const clientes = find('clientes', () => true);
+export async function getPendencias() {
+    const userId = await getCurrentUserId();
 
-    const pendentes = find('transacoes', t =>
-        t.user_id === userId && (t.status === 'pendente' || t.status === 'atrasado')
-    ).map(t => ({
+    const { data: pendentes } = await supabase
+        .from('transacoes')
+        .select('*, categorias(nome), clientes(nome)')
+        .eq('user_id', userId)
+        .in('status', ['pendente', 'atrasado'])
+        .order('data_vencimento', { ascending: true });
+
+    const lista = (pendentes || []).map(t => ({
         ...t,
-        categoria_nome: categorias.find(c => c.id === t.categoria_id)?.nome || null,
-        cliente_nome: clientes.find(cl => cl.id === t.cliente_id)?.nome || null
-    })).sort((a, b) => (a.data_vencimento || '').localeCompare(b.data_vencimento || ''));
+        categoria_nome: t.categorias?.nome || null,
+        cliente_nome: t.clientes?.nome || null
+    }));
 
     const resumoMap = {};
-    pendentes.forEach(t => {
+    lista.forEach(t => {
         if (!resumoMap[t.status]) resumoMap[t.status] = { status: t.status, quantidade: 0, total: 0 };
         resumoMap[t.status].quantidade++;
         resumoMap[t.status].total += t.valor;
     });
 
-    return Promise.resolve({ success: true, data: { pendentes, resumo: Object.values(resumoMap) } });
+    return { success: true, data: { pendentes: lista, resumo: Object.values(resumoMap) } };
 }

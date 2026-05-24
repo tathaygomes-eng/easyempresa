@@ -110,28 +110,3 @@ export const PLANOS = {
         ]
     }
 };
-
-export function getPlanoAtual() {
-    try {
-        const user = JSON.parse(localStorage.getItem('usuario'));
-        return user?.plano || 'gratuito';
-    } catch {
-        return 'gratuito';
-    }
-}
-
-export function getPlanoConfig() {
-    return PLANOS[getPlanoAtual()] || PLANOS.gratuito;
-}
-
-export function hasFeature(feature) {
-    return getPlanoConfig().features[feature] === true;
-}
-
-export function getLimite(tipo) {
-    return getPlanoConfig().limites[tipo];
-}
-
-export function isUnlimited(tipo) {
-    return getPlanoConfig().limites[tipo] === Infinity;
-}

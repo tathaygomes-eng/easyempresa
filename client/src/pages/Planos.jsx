@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { atualizarPlano } from '../services/authService';
-import { PLANOS, getPlanoAtual } from '../config/planos';
+import { useAuth } from '../context/AuthContext';
+import { PLANOS } from '../config/planos';
 import { useToast } from '../components/ui/Toast';
 import './Planos.css';
 
@@ -12,23 +12,42 @@ const XIcon = () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
 );
 
+const KIRVANO_CHECKOUTS = {
+    premium: 'https://pay.kirvano.com/0b135afa-4b8f-490c-8c1c-c70ecffa8d5e',
+    basico: 'https://pay.kirvano.com/c5a42b3d-f997-4438-bf82-7e927b125390'
+};
+
 export default function Planos() {
     const toast = useToast();
+    const { usuario, planoKey, refreshProfile } = useAuth();
     const [loading, setLoading] = useState(null);
-    const planoAtual = getPlanoAtual();
 
-    const handleAssinar = async (planoKey) => {
-        if (planoKey === planoAtual) return;
+    const handleAssinar = async (planoTarget) => {
+        if (planoTarget === planoKey) return;
 
-  if (planoKey === "premium") {
-    window.open("https://pay.kirvano.com/0b135afa-4b8f-490c-8c1c-c70ecffa8d5e", "_blank");
-    return;
-  }
+        if (planoTarget === 'gratuito') {
+            // Downgrade para gratuito
+            setLoading(planoTarget);
+            try {
+                const { atualizarPlano } = await import('../services/authService');
+                await atualizarPlano('gratuito');
+                await refreshProfile();
+                toast.success('Plano alterado para Gratuito');
+            } catch (err) {
+                toast.error(err.message);
+            } finally {
+                setLoading(null);
+            }
+            return;
+        }
 
-  if (planoKey === "basico") {
-    window.open("https://pay.kirvano.com/c5a42b3d-f997-4438-bf82-7e927b125390", "_blank");
-    return;
-  }
+        // Checkout Kirvano com email do usuario para identificacao no webhook
+        const baseUrl = KIRVANO_CHECKOUTS[planoTarget];
+        if (baseUrl && usuario?.email) {
+            const url = `${baseUrl}?email=${encodeURIComponent(usuario.email)}&external_reference=${usuario.id}`;
+            window.open(url, '_blank');
+            toast.info('Redirecionando para pagamento...');
+        }
     };
 
     const ordem = ['gratuito', 'basico', 'premium'];
@@ -43,8 +62,8 @@ export default function Planos() {
             <div className="planos-grid">
                 {ordem.map(key => {
                     const plano = PLANOS[key];
-                    const isAtual = key === planoAtual;
-                    const isDowngrade = ordem.indexOf(key) < ordem.indexOf(planoAtual);
+                    const isAtual = key === planoKey;
+                    const isDowngrade = ordem.indexOf(key) < ordem.indexOf(planoKey);
 
                     return (
                         <div key={key} className={`plano-card ${key} ${isAtual ? 'atual' : ''}`}>

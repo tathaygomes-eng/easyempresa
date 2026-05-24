@@ -1,20 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import { getResumo, getProximosAgendamentos, getTransacoesRecentes } from '../services/dashboardService';
 import { formatBRL, formatDateTime, statusColors, statusLabels } from '../utils/formatters';
-import { getPlanoAtual, PLANOS, isUnlimited, getLimite } from '../config/planos';
+import { PLANOS } from '../config/planos';
 import './Dashboard.css';
 
 export default function Dashboard() {
     const navigate = useNavigate();
+    const { planoKey } = useAuth();
     const [resumo, setResumo] = useState(null);
     const [agendamentos, setAgendamentos] = useState([]);
     const [transacoes, setTransacoes] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const planoKey = getPlanoAtual();
-    const planoInfo = PLANOS[planoKey];
+    const planoInfo = PLANOS[planoKey] || PLANOS.gratuito;
 
     useEffect(() => {
         Promise.all([getResumo(), getProximosAgendamentos(), getTransacoesRecentes()])
@@ -46,9 +47,9 @@ export default function Dashboard() {
                             Plano {planoInfo?.nome}
                         </span>
                         <span className="plan-banner-limits">
-                            {isUnlimited('transacoesMes') ? 'Transacoes ilimitadas' : `${getLimite('transacoesMes')} transacoes/mes`}
+                            {planoInfo.limites.transacoesMes === Infinity ? 'Transacoes ilimitadas' : `${planoInfo.limites.transacoesMes} transacoes/mes`}
                             {' · '}
-                            {isUnlimited('clientes') ? 'Clientes ilimitados' : `${getLimite('clientes')} clientes`}
+                            {planoInfo.limites.clientes === Infinity ? 'Clientes ilimitados' : `${planoInfo.limites.clientes} clientes`}
                         </span>
                     </div>
                     <button className="plan-banner-btn" onClick={() => navigate('/planos')}>

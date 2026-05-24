@@ -1,89 +1,110 @@
-import { insert, update, remove, findById, find } from '../db/localDb';
+import { supabase } from '../supabase';
 
-function getCurrentUserId() {
-    try {
-        const user = JSON.parse(localStorage.getItem('usuario'));
-        return user?.id;
-    } catch {
-        return null;
-    }
+async function getCurrentUserId() {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.id;
 }
 
-export function listarAgendamentos(params = {}) {
-    const userId = getCurrentUserId();
-    let agendamentos = find('agendamentos', a => a.user_id === userId);
+export async function listarAgendamentos(params = {}) {
+    const userId = await getCurrentUserId();
 
-    if (params.data_inicio) agendamentos = agendamentos.filter(a => a.data_inicio >= params.data_inicio);
-    if (params.data_fim) agendamentos = agendamentos.filter(a => a.data_inicio <= params.data_fim);
-    if (params.cliente_id) agendamentos = agendamentos.filter(a => a.cliente_id === Number(params.cliente_id));
-    if (params.status) agendamentos = agendamentos.filter(a => a.status === params.status);
+    let query = supabase
+        .from('agendamentos')
+        .select('*, clientes(nome)')
+        .eq('user_id', userId);
 
-    const clientes = find('clientes', () => true);
+    if (params.data_inicio) query = query.gte('data_inicio', params.data_inicio);
+    if (params.data_fim) query = query.lte('data_inicio', params.data_fim);
+    if (params.cliente_id) query = query.eq('cliente_id', Number(params.cliente_id));
+    if (params.status) query = query.eq('status', params.status);
 
-    agendamentos = agendamentos.map(a => ({
+    query = query.order('data_inicio', { ascending: true });
+
+    const { data, error } = await query;
+    if (error) throw new Error(error.message);
+
+    const agendamentos = (data || []).map(a => ({
         ...a,
-        cliente_nome: clientes.find(c => c.id === a.cliente_id)?.nome || null
+        cliente_nome: a.clientes?.nome || null
     }));
 
-    agendamentos.sort((a, b) => a.data_inicio.localeCompare(b.data_inicio));
-
-    return Promise.resolve({ success: true, data: agendamentos });
+    return { success: true, data: agendamentos };
 }
 
-export function getAgendamento(id) {
-    const a = findById('agendamentos', id);
-    if (!a) return Promise.reject(new Error('Agendamento nao encontrado.'));
-    const cli = findById('clientes', a.cliente_id);
-    return Promise.resolve({ success: true, data: { ...a, cliente_nome: cli?.nome } });
+export async function getAgendamento(id) {
+    const { data: a, error } = await supabase
+        .from('agendamentos')
+        .select('*, clientes(nome)')
+        .eq('id', id)
+        .single();
+
+    if (error || !a) throw new Error('Agendamento nao encontrado.');
+    return { success: true, data: { ...a, cliente_nome: a.clientes?.nome } };
 }
 
-export function criarAgendamento(data) {
-    const userId = getCurrentUserId();
-    const result = insert('agendamentos', {
-        titulo: data.titulo,
-        descricao: data.descricao || null,
-        data_inicio: data.data_inicio,
-        data_fim: data.data_fim,
-        dia_inteiro: data.dia_inteiro ? 1 : 0,
-        cliente_id: data.cliente_id ? Number(data.cliente_id) : null,
-        local: data.local || null,
-        status: data.status || 'agendado',
-        lembrete: data.lembrete !== undefined ? (data.lembrete ? 1 : 0) : 1,
-        lembrete_minutos: data.lembrete_minutos || 30,
-        cor: data.cor || '#3B82F6',
-        recorrente: data.recorrente ? 1 : 0,
-        user_id: userId
-    });
-    return Promise.resolve({ success: true, data: { id: result.lastInsertRowid, ...data } });
+export async function criarAgendamento(data) {
+    const userId = await getCurrentUserId();
+
+    const { data: result, error } = await supabase
+        .from('agendamentos')
+        .insert({
+            titulo: data.titulo,
+            descricao: data.descricao || null,
+            data_inicio: data.data_inicio,
+            data_fim: data.data_fim || null,
+            cliente_id: data.cliente_id ? Number(data.cliente_id) : null,
+            status: data.status || 'agendado',
+            user_id: userId
+        })
+        .select()
+        .single();
+
+    if (error) throw new Error(error.message);
+    return { success: true, data: result };
 }
 
-export function atualizarAgendamento(id, data) {
-    update('agendamentos', id, data);
-    return Promise.resolve({ success: true });
+export async function atualizarAgendamento(id, data) {
+    const { error } = await supabase
+        .from('agendamentos')
+        .update({ ...data, atualizado_em: new Date().toISOString() })
+        .eq('id', id);
+
+    if (error) throw new Error(error.message);
+    return { success: true };
 }
 
-export function excluirAgendamento(id) {
-    remove('agendamentos', id);
-    return Promise.resolve({ success: true });
+export async function excluirAgendamento(id) {
+    const { error } = await supabase
+        .from('agendamentos')
+        .delete()
+        .eq('id', id);
+
+    if (error) throw new Error(error.message);
+    return { success: true };
 }
 
-export function alterarStatusAgendamento(id, status) {
-    update('agendamentos', id, { status });
-    return Promise.resolve({ success: true });
+export async function alterarStatusAgendamento(id, status) {
+    const { error } = await supabase
+        .from('agendamentos')
+        .update({ status, atualizado_em: new Date().toISOString() })
+        .eq('id', id);
+
+    if (error) throw new Error(error.message);
+    return { success: true };
 }
 
-export function getLembretes() {
-    const userId = getCurrentUserId();
-    const agora = new Date();
-    const em30min = new Date(agora.getTime() + 30 * 60000).toISOString().slice(0, 16);
+export async function getLembretes() {
+    const userId = await getCurrentUserId();
+    const agora = new Date().toISOString();
 
-    const lembretes = find('agendamentos', a =>
-        a.user_id === userId &&
-        a.lembrete === 1 &&
-        a.status !== 'cancelado' &&
-        a.data_inicio <= em30min &&
-        a.data_inicio >= agora.toISOString().slice(0, 16)
-    );
+    const { data } = await supabase
+        .from('agendamentos')
+        .select('*')
+        .eq('user_id', userId)
+        .neq('status', 'cancelado')
+        .gte('data_inicio', agora)
+        .order('data_inicio', { ascending: true })
+        .limit(5);
 
-    return Promise.resolve({ success: true, data: lembretes });
+    return { success: true, data: data || [] };
 }

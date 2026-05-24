@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useState } from 'react';
-import { hasFeature, getPlanoAtual, PLANOS } from '../../config/planos';
+import { useAuth } from '../../context/AuthContext';
+import { PLANOS } from '../../config/planos';
 import './Sidebar.css';
 
 const LockIcon = () => (
@@ -40,7 +41,7 @@ const icons = {
 export default function Sidebar({ usuario, onLogout }) {
     const location = useLocation();
     const [openMenus, setOpenMenus] = useState({});
-    const planoKey = getPlanoAtual();
+    const { planoKey } = useAuth();
     const planoInfo = PLANOS[planoKey];
 
     const toggleMenu = (label) => {
@@ -50,6 +51,12 @@ export default function Sidebar({ usuario, onLogout }) {
     const isActive = (item) => {
         if (item.path) return location.pathname === item.path;
         return item.children?.some(c => location.pathname.startsWith(c.path));
+    };
+
+    const hasFeature = (feature) => {
+        if (!feature) return true;
+        const plano = PLANOS[planoKey] || PLANOS.gratuito;
+        return plano.features[feature] === true;
     };
 
     return (

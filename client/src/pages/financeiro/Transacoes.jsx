@@ -22,6 +22,7 @@ export default function Transacoes() {
     const [editingId, setEditingId] = useState(null);
     const [form, setForm] = useState(emptyForm);
     const [loading, setLoading] = useState(true);
+    const [confirmDelete, setConfirmDelete] = useState(null);
 
     const fetchData = () => {
         setLoading(true);
@@ -51,9 +52,12 @@ export default function Transacoes() {
     };
 
     const handleDelete = (id) => {
-        if (confirm('Deseja excluir esta transacao?')) {
-            excluirTransacao(id).then(() => { fetchData(); toast.success('Transacao excluida!'); }).catch(err => toast.error(err.message));
-        }
+        setConfirmDelete(id);
+    };
+
+    const confirmDeleteAction = () => {
+        excluirTransacao(confirmDelete).then(() => { fetchData(); toast.success('Transacao excluida!'); }).catch(err => toast.error(err.message));
+        setConfirmDelete(null);
     };
 
     const handleStatusChange = (id, status) => {
@@ -222,6 +226,19 @@ export default function Transacoes() {
                                 <button type="submit" className="btn-primary">{editingId ? 'Salvar' : 'Criar'}</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {confirmDelete && (
+                <div className="modal-overlay" onClick={() => setConfirmDelete(null)}>
+                    <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+                        <h2>Confirmar exclusao</h2>
+                        <p style={{ margin: '16px 0', color: 'var(--text-muted)' }}>Tem certeza que deseja excluir esta transacao? Esta acao nao pode ser desfeita.</p>
+                        <div className="form-actions">
+                            <button className="btn-secondary" onClick={() => setConfirmDelete(null)}>Cancelar</button>
+                            <button className="btn-primary" style={{ background: 'var(--danger)' }} onClick={confirmDeleteAction}>Excluir</button>
+                        </div>
                     </div>
                 </div>
             )}

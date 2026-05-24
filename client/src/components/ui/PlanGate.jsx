@@ -1,16 +1,16 @@
 import { useNavigate } from 'react-router-dom';
-import { hasFeature, getPlanoAtual, PLANOS } from '../../config/planos';
+import { useAuth } from '../../context/AuthContext';
+import { PLANOS } from '../../config/planos';
 import './PlanGate.css';
 
 export default function PlanGate({ feature, children }) {
     const navigate = useNavigate();
-    const allowed = hasFeature(feature);
-    const planoKey = getPlanoAtual();
-    const planoInfo = PLANOS[planoKey];
+    const { planoKey } = useAuth();
+    const planoConfig = PLANOS[planoKey] || PLANOS.gratuito;
+    const allowed = planoConfig.features[feature] === true;
 
     if (allowed) return children;
 
-    // Encontrar qual plano oferece essa feature
     const planoNecessario = Object.entries(PLANOS).find(([_, p]) => p.features[feature])?.[1];
 
     return (
@@ -24,7 +24,7 @@ export default function PlanGate({ feature, children }) {
                 </div>
                 <h3>Recurso exclusivo {planoNecessario?.nome || 'Premium'}</h3>
                 <p>Este recurso esta disponivel no plano <strong>{planoNecessario?.nome || 'Premium'}</strong>.</p>
-                <p className="plan-gate-current">Seu plano atual: <strong style={{ color: planoInfo?.cor }}>{planoInfo?.nome}</strong></p>
+                <p className="plan-gate-current">Seu plano atual: <strong style={{ color: planoConfig?.cor }}>{planoConfig?.nome}</strong></p>
                 <button className="plan-gate-btn" onClick={() => navigate('/planos')}>
                     Ver planos e fazer upgrade
                 </button>

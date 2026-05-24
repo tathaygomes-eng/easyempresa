@@ -1,8 +1,11 @@
 import { useState } from 'react';
-import { login, registrar } from '../services/authService';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import './Login.css';
 
-export default function Login({ onLogin }) {
+export default function Login() {
+    const { signIn, signUp } = useAuth();
+    const navigate = useNavigate();
     const [isRegister, setIsRegister] = useState(false);
     const [form, setForm] = useState({ nome: '', email: '', senha: '' });
     const [error, setError] = useState('');
@@ -14,16 +17,12 @@ export default function Login({ onLogin }) {
         setLoading(true);
 
         try {
-            let res;
             if (isRegister) {
-                res = await registrar(form.nome, form.email, form.senha);
+                await signUp(form.nome, form.email, form.senha);
             } else {
-                res = await login(form.email, form.senha);
+                await signIn(form.email, form.senha);
             }
-
-            localStorage.setItem('token', res.data.token);
-            localStorage.setItem('usuario', JSON.stringify(res.data.usuario));
-            onLogin(res.data.usuario);
+            navigate('/');
         } catch (err) {
             setError(err.message);
         } finally {

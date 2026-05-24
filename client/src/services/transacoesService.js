@@ -1,87 +1,118 @@
-import { insert, update, remove, findById, find } from '../db/localDb';
+import { supabase } from '../supabase';
 
-function getCurrentUserId() {
-    try {
-        const user = JSON.parse(localStorage.getItem('usuario'));
-        return user?.id;
-    } catch {
-        return null;
-    }
+async function getCurrentUserId() {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.id;
 }
 
-export function listarTransacoes(params = {}) {
-    const userId = getCurrentUserId();
-    let transacoes = find('transacoes', t => t.user_id === userId);
+export async function listarTransacoes(params = {}) {
+    const userId = await getCurrentUserId();
 
-    if (params.tipo) transacoes = transacoes.filter(t => t.tipo === params.tipo);
-    if (params.status) transacoes = transacoes.filter(t => t.status === params.status);
-    if (params.categoria_id) transacoes = transacoes.filter(t => t.categoria_id === Number(params.categoria_id));
-    if (params.cliente_id) transacoes = transacoes.filter(t => t.cliente_id === Number(params.cliente_id));
-    if (params.data_inicio) transacoes = transacoes.filter(t => t.data_transacao >= params.data_inicio);
-    if (params.data_fim) transacoes = transacoes.filter(t => t.data_transacao <= params.data_fim);
+    let query = supabase
+        .from('transacoes')
+        .select('*, categorias(nome, cor), clientes(nome)', { count: 'exact' })
+        .eq('user_id', userId);
 
-    const total = transacoes.length;
+    if (params.tipo) query = query.eq('tipo', params.tipo);
+    if (params.status) query = query.eq('status', params.status);
+    if (params.categoria_id) query = query.eq('categoria_id', Number(params.categoria_id));
+    if (params.cliente_id) query = query.eq('cliente_id', Number(params.cliente_id));
+    if (params.data_inicio) query = query.gte('data_transacao', params.data_inicio);
+    if (params.data_fim) query = query.lte('data_transacao', params.data_fim);
+
     const page = parseInt(params.page) || 1;
     const limit = parseInt(params.limit) || 20;
     const offset = (page - 1) * limit;
 
-    transacoes.sort((a, b) => (b.data_transacao + b.criado_em).localeCompare(a.data_transacao + a.criado_em));
+    query = query
+        .order('data_transacao', { ascending: false })
+        .order('criado_em', { ascending: false })
+        .range(offset, offset + limit - 1);
 
-    const categorias = find('categorias', () => true);
-    const clientes = find('clientes', () => true);
+    const { data, error, count } = await query;
+    if (error) throw new Error(error.message);
 
-    const paginated = transacoes.slice(offset, offset + limit).map(t => ({
+    const transacoes = (data || []).map(t => ({
         ...t,
-        categoria_nome: categorias.find(c => c.id === t.categoria_id)?.nome || null,
-        cliente_nome: clientes.find(cl => cl.id === t.cliente_id)?.nome || null
+        categoria_nome: t.categorias?.nome || null,
+        cliente_nome: t.clientes?.nome || null
     }));
 
-    return Promise.resolve({
+    return {
         success: true,
-        data: paginated,
-        pagination: { page, limit, total, pages: Math.ceil(total / limit) }
-    });
+        data: transacoes,
+        pagination: { page, limit, total: count || 0, pages: Math.ceil((count || 0) / limit) }
+    };
 }
 
-export function getTransacao(id) {
-    const t = findById('transacoes', id);
-    if (!t) return Promise.reject(new Error('Transacao nao encontrada.'));
-    const cat = findById('categorias', t.categoria_id);
-    const cli = findById('clientes', t.cliente_id);
-    return Promise.resolve({ success: true, data: { ...t, categoria_nome: cat?.nome, cliente_nome: cli?.nome } });
+export async function getTransacao(id) {
+    const { data: t, error } = await supabase
+        .from('transacoes')
+        .select('*, categorias(nome), clientes(nome)')
+        .eq('id', id)
+        .single();
+
+    if (error || !t) throw new Error('Transacao nao encontrada.');
+
+    return {
+        success: true,
+        data: { ...t, categoria_nome: t.categorias?.nome, cliente_nome: t.clientes?.nome }
+    };
 }
 
-export function criarTransacao(data) {
-    const userId = getCurrentUserId();
-    const result = insert('transacoes', {
-        tipo: data.tipo,
-        descricao: data.descricao,
-        valor: Number(data.valor),
-        data_transacao: data.data_transacao,
-        data_vencimento: data.data_vencimento || null,
-        status: data.status || 'pendente',
-        categoria_id: data.categoria_id ? Number(data.categoria_id) : null,
-        cliente_id: data.cliente_id ? Number(data.cliente_id) : null,
-        forma_pagamento: data.forma_pagamento || null,
-        observacoes: data.observacoes || null,
-        recorrente: data.recorrente ? 1 : 0,
-        recorrencia_tipo: data.recorrencia_tipo || null,
-        user_id: userId
-    });
-    return Promise.resolve({ success: true, data: { id: result.lastInsertRowid, ...data } });
+export async function criarTransacao(data) {
+    const userId = await getCurrentUserId();
+
+    const { data: result, error } = await supabase
+        .from('transacoes')
+        .insert({
+            tipo: data.tipo,
+            descricao: data.descricao,
+            valor: Number(data.valor),
+            data_transacao: data.data_transacao,
+            data_vencimento: data.data_vencimento || null,
+            status: data.status || 'pendente',
+            categoria_id: data.categoria_id ? Number(data.categoria_id) : null,
+            cliente_id: data.cliente_id ? Number(data.cliente_id) : null,
+            forma_pagamento: data.forma_pagamento || null,
+            observacoes: data.observacoes || null,
+            recorrente: data.recorrente ? 1 : 0,
+            recorrencia_tipo: data.recorrencia_tipo || null,
+            user_id: userId
+        })
+        .select()
+        .single();
+
+    if (error) throw new Error(error.message);
+    return { success: true, data: result };
 }
 
-export function atualizarTransacao(id, data) {
-    update('transacoes', id, data);
-    return Promise.resolve({ success: true });
+export async function atualizarTransacao(id, data) {
+    const { error } = await supabase
+        .from('transacoes')
+        .update({ ...data, atualizado_em: new Date().toISOString() })
+        .eq('id', id);
+
+    if (error) throw new Error(error.message);
+    return { success: true };
 }
 
-export function excluirTransacao(id) {
-    remove('transacoes', id);
-    return Promise.resolve({ success: true });
+export async function excluirTransacao(id) {
+    const { error } = await supabase
+        .from('transacoes')
+        .delete()
+        .eq('id', id);
+
+    if (error) throw new Error(error.message);
+    return { success: true };
 }
 
-export function alterarStatusTransacao(id, status) {
-    update('transacoes', id, { status });
-    return Promise.resolve({ success: true });
+export async function alterarStatusTransacao(id, status) {
+    const { error } = await supabase
+        .from('transacoes')
+        .update({ status, atualizado_em: new Date().toISOString() })
+        .eq('id', id);
+
+    if (error) throw new Error(error.message);
+    return { success: true };
 }

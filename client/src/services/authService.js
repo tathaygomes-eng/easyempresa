@@ -1,97 +1,83 @@
-import { findOne, insert, update } from '../db/localDb';
-import { seedSystemCategories } from '../db/seed';
+import { supabase } from '../supabase';
 
-function simpleHash(str) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash |= 0;
-    }
-    return 'local_' + Math.abs(hash).toString(36);
+export async function login(email, senha) {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
+    if (error) throw new Error('Email ou senha incorretos.');
+
+    const { data: profile } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+
+    if (!profile) throw new Error('Perfil nao encontrado.');
+    return { success: true, data: { usuario: profile, token: data.session.access_token } };
 }
 
-function generateToken(user) {
-    return btoa(JSON.stringify({ id: user.id, email: user.email, plano: user.plano, exp: Date.now() + 7 * 24 * 60 * 60 * 1000 }));
-}
+export async function registrar(nome, email, senha) {
+    if (!nome || !email || !senha) throw new Error('Nome, email e senha sao obrigatorios.');
+    if (senha.length < 6) throw new Error('A senha deve ter pelo menos 6 caracteres.');
 
-function getUserFromToken() {
-    try {
-        const token = localStorage.getItem('token');
-        if (!token) return null;
-        const payload = JSON.parse(atob(token));
-        if (payload.exp < Date.now()) return null;
-        return payload;
-    } catch {
-        return null;
-    }
-}
-
-export function login(email, senha) {
-    const user = findOne('usuarios', u => u.email === email && u.ativo === 1);
-    if (!user) return Promise.reject(new Error('Email ou senha incorretos.'));
-    if (user.senha !== simpleHash(senha)) return Promise.reject(new Error('Email ou senha incorretos.'));
-
-    seedSystemCategories();
-
-    const { senha: _, ...usuario } = user;
-    const token = generateToken(user);
-    return Promise.resolve({ success: true, data: { usuario, token } });
-}
-
-export function registrar(nome, email, senha) {
-    if (!nome || !email || !senha) return Promise.reject(new Error('Nome, email e senha sao obrigatorios.'));
-    if (senha.length < 6) return Promise.reject(new Error('A senha deve ter pelo menos 6 caracteres.'));
-
-    const existente = findOne('usuarios', u => u.email === email);
-    if (existente) return Promise.reject(new Error('Este email ja esta cadastrado.'));
-
-    const result = insert('usuarios', {
-        nome,
+    const { data, error } = await supabase.auth.signUp({
         email,
-        senha: simpleHash(senha),
-        plano: 'gratuito',
-        ativo: 1
+        password: senha,
+        options: { data: { nome } }
     });
+    if (error) throw new Error(error.message);
 
-    insert('empresa_config', {
-        user_id: result.lastInsertRowid,
-        nome_empresa: '',
-        ramo_atividade: '',
-        objetivo: '[]',
-        onboarding_completo: 0
-    });
+    // Trigger handle_new_user() cria o perfil automaticamente
+    await new Promise(r => setTimeout(r, 500));
 
-    seedSystemCategories();
+    // Criar config da empresa (upsert para evitar conflito)
+    await supabase
+        .from('empresa_config')
+        .upsert({
+            user_id: data.user.id,
+            nome_empresa: '',
+            ramo_atividade: '',
+            objetivo: '[]',
+            onboarding_completo: 0
+        }, { onConflict: 'user_id' });
 
-    const usuario = findOne('usuarios', u => u.id === result.lastInsertRowid);
-    const { senha: _, ...usuarioSemSenha } = usuario;
-    const token = generateToken(usuario);
+    const { data: profile } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
 
-    return Promise.resolve({ success: true, data: { usuario: usuarioSemSenha, token } });
+    return { success: true, data: { usuario: profile, token: data.session?.access_token } };
 }
 
-export function getPerfil() {
-    const payload = getUserFromToken();
-    if (!payload) return Promise.reject(new Error('Sessao expirada.'));
-    const user = findOne('usuarios', u => u.id === payload.id && u.ativo === 1);
-    if (!user) return Promise.reject(new Error('Usuario nao encontrado.'));
-    const { senha: _, ...usuario } = user;
-    return Promise.resolve({ success: true, data: usuario });
+export async function getPerfil() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Sessao expirada.');
+
+    const { data: profile } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+    if (!profile) throw new Error('Usuario nao encontrado.');
+    return { success: true, data: profile };
 }
 
-export function atualizarPlano(plano) {
-    if (!['basico', 'premium', 'gratuito'].includes(plano)) return Promise.reject(new Error('Plano invalido.'));
-    const payload = getUserFromToken();
-    if (!payload) return Promise.reject(new Error('Sessao expirada.'));
+export async function atualizarPlano(plano) {
+    if (!['basico', 'premium', 'gratuito'].includes(plano)) throw new Error('Plano invalido.');
 
-    update('usuarios', payload.id, { plano });
-    const user = findOne('usuarios', u => u.id === payload.id);
-    const { senha: _, ...usuario } = user;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Sessao expirada.');
 
-    localStorage.setItem('usuario', JSON.stringify(usuario));
-    const token = generateToken(user);
-    localStorage.setItem('token', token);
+    const { data: profile } = await supabase
+        .from('usuarios')
+        .update({ plano, atualizado_em: new Date().toISOString() })
+        .eq('id', user.id)
+        .select()
+        .single();
 
-    return Promise.resolve({ success: true, data: usuario });
+    return { success: true, data: profile };
+}
+
+export async function logout() {
+    await supabase.auth.signOut();
 }

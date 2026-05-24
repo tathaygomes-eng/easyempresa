@@ -1,34 +1,30 @@
-import { find, findAll } from '../db/localDb';
+import { supabase } from '../supabase';
 
-function getCurrentUserId() {
-    try {
-        const user = JSON.parse(localStorage.getItem('usuario'));
-        return user?.id;
-    } catch {
-        return null;
-    }
+async function getCurrentUserId() {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.id;
 }
 
-export function getResumo() {
-    const userId = getCurrentUserId();
-    const transacoes = find('transacoes', t => t.user_id === userId);
-    const hoje = new Date().toISOString().slice(0, 7);
+export async function getResumo() {
+    const userId = await getCurrentUserId();
+    const hoje = new Date();
+    const mesAtual = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
 
-    const saldo = transacoes.reduce((acc, t) => {
-        return acc + (t.tipo === 'receita' ? t.valor : -t.valor);
-    }, 0);
+    const { data: transacoes } = await supabase
+        .from('transacoes')
+        .select('tipo, valor, data_transacao, status')
+        .eq('user_id', userId);
 
-    const receitasMes = transacoes
-        .filter(t => t.tipo === 'receita' && t.data_transacao?.startsWith(hoje))
-        .reduce((acc, t) => acc + t.valor, 0);
+    const todas = transacoes || [];
+    const saldo = todas.reduce((acc, t) => acc + (t.tipo === 'receita' ? t.valor : -t.valor), 0);
 
-    const despesasMes = transacoes
-        .filter(t => t.tipo === 'despesa' && t.data_transacao?.startsWith(hoje))
-        .reduce((acc, t) => acc + t.valor, 0);
+    const transacoesMes = todas.filter(t => t.data_transacao?.startsWith(mesAtual));
+    const receitasMes = transacoesMes.filter(t => t.tipo === 'receita').reduce((acc, t) => acc + t.valor, 0);
+    const despesasMes = transacoesMes.filter(t => t.tipo === 'despesa').reduce((acc, t) => acc + t.valor, 0);
 
-    const pendentesArr = transacoes.filter(t => t.status === 'pendente' || t.status === 'atrasado');
+    const pendentesArr = todas.filter(t => t.status === 'pendente' || t.status === 'atrasado');
 
-    return Promise.resolve({
+    return {
         success: true,
         data: {
             saldo,
@@ -37,40 +33,46 @@ export function getResumo() {
             pendentes: pendentesArr.length,
             totalPendentes: pendentesArr.reduce((acc, t) => acc + t.valor, 0)
         }
-    });
+    };
 }
 
-export function getProximosAgendamentos() {
-    const userId = getCurrentUserId();
-    const hoje = new Date().toISOString().slice(0, 10);
-    const clientes = findAll('clientes');
+export async function getProximosAgendamentos() {
+    const userId = await getCurrentUserId();
+    const hoje = new Date().toISOString();
 
-    const agendamentos = find('agendamentos', a =>
-        a.user_id === userId && a.data_inicio >= hoje && a.status !== 'cancelado'
-    ).sort((a, b) => a.data_inicio.localeCompare(b.data_inicio)).slice(0, 5);
+    const { data } = await supabase
+        .from('agendamentos')
+        .select('*, clientes(nome)')
+        .eq('user_id', userId)
+        .gte('data_inicio', hoje)
+        .neq('status', 'cancelado')
+        .order('data_inicio', { ascending: true })
+        .limit(5);
 
-    const data = agendamentos.map(a => ({
+    const agendamentos = (data || []).map(a => ({
         ...a,
-        cliente_nome: clientes.find(c => c.id === a.cliente_id)?.nome || null
+        cliente_nome: a.clientes?.nome || null
     }));
 
-    return Promise.resolve({ success: true, data });
+    return { success: true, data: agendamentos };
 }
 
-export function getTransacoesRecentes() {
-    const userId = getCurrentUserId();
-    const categorias = findAll('categorias');
-    const clientes = findAll('clientes');
+export async function getTransacoesRecentes() {
+    const userId = await getCurrentUserId();
 
-    const transacoes = find('transacoes', t => t.user_id === userId)
-        .sort((a, b) => (b.data_transacao + b.criado_em).localeCompare(a.data_transacao + a.criado_em))
-        .slice(0, 5);
+    const { data } = await supabase
+        .from('transacoes')
+        .select('*, categorias(nome), clientes(nome)')
+        .eq('user_id', userId)
+        .order('data_transacao', { ascending: false })
+        .order('criado_em', { ascending: false })
+        .limit(5);
 
-    const data = transacoes.map(t => ({
+    const transacoes = (data || []).map(t => ({
         ...t,
-        categoria_nome: categorias.find(c => c.id === t.categoria_id)?.nome || null,
-        cliente_nome: clientes.find(c => c.id === t.cliente_id)?.nome || null
+        categoria_nome: t.categorias?.nome || null,
+        cliente_nome: t.clientes?.nome || null
     }));
 
-    return Promise.resolve({ success: true, data });
+    return { success: true, data: transacoes };
 }

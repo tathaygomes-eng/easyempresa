@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/layout/Layout';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import LoadingSpinner from './components/ui/LoadingSpinner';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 import Login from './pages/Login';
 import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
@@ -15,9 +17,9 @@ import ClienteDetalhes from './pages/agenda/ClienteDetalhes';
 import Planos from './pages/Planos';
 import NotFound from './pages/NotFound';
 import { obterConfig } from './services/empresaService';
-import { seedSystemCategories } from './db/seed';
 
-function AppRoutes({ usuario, onLogin, onLogout }) {
+function AppRoutes() {
+    const { usuario, loading, signOut } = useAuth();
     const [onboardingCompleto, setOnboardingCompleto] = useState(null);
 
     useEffect(() => {
@@ -33,13 +35,19 @@ function AppRoutes({ usuario, onLogin, onLogout }) {
                 .catch(() => {
                     setOnboardingCompleto(false);
                 });
+        } else {
+            setOnboardingCompleto(null);
         }
     }, [usuario]);
+
+    if (loading) {
+        return <LoadingSpinner fullScreen message="Iniciando EasyEmpresa..." />;
+    }
 
     if (!usuario) {
         return (
             <Routes>
-                <Route path="/login" element={<Login onLogin={onLogin} />} />
+                <Route path="/login" element={<Login />} />
                 <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
         );
@@ -54,16 +62,16 @@ function AppRoutes({ usuario, onLogin, onLogout }) {
     }
 
     return (
-        <Layout usuario={usuario} onLogout={onLogout}>
+        <Layout usuario={usuario} onLogout={signOut}>
             <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/financeiro/transacoes" element={<Transacoes />} />
-                <Route path="/financeiro/relatorios" element={<Relatorios />} />
-                <Route path="/financeiro/fluxo-caixa" element={<FluxoCaixa />} />
-                <Route path="/agenda/calendario" element={<Calendario />} />
-                <Route path="/agenda/clientes" element={<Clientes />} />
-                <Route path="/agenda/clientes/:id" element={<ClienteDetalhes />} />
-                <Route path="/planos" element={<Planos usuario={usuario} />} />
+                <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/financeiro/transacoes" element={<ProtectedRoute requiredFeature="transacoes"><Transacoes /></ProtectedRoute>} />
+                <Route path="/financeiro/relatorios" element={<ProtectedRoute requiredFeature="relatorios"><Relatorios /></ProtectedRoute>} />
+                <Route path="/financeiro/fluxo-caixa" element={<ProtectedRoute requiredFeature="fluxoCaixa"><FluxoCaixa /></ProtectedRoute>} />
+                <Route path="/agenda/calendario" element={<ProtectedRoute requiredFeature="calendario"><Calendario /></ProtectedRoute>} />
+                <Route path="/agenda/clientes" element={<ProtectedRoute requiredFeature="clientes"><Clientes /></ProtectedRoute>} />
+                <Route path="/agenda/clientes/:id" element={<ProtectedRoute requiredFeature="clientes"><ClienteDetalhes /></ProtectedRoute>} />
+                <Route path="/planos" element={<ProtectedRoute><Planos /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
             </Routes>
         </Layout>
@@ -71,48 +79,12 @@ function AppRoutes({ usuario, onLogin, onLogout }) {
 }
 
 function App() {
-    const [usuario, setUsuario] = useState(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        // Seed categorias do sistema na inicializacao
-        seedSystemCategories();
-
-        const token = localStorage.getItem('token');
-        const usuarioSalvo = localStorage.getItem('usuario');
-        if (token && usuarioSalvo) {
-            try {
-                setUsuario(JSON.parse(usuarioSalvo));
-            } catch {
-                localStorage.removeItem('token');
-                localStorage.removeItem('usuario');
-            }
-        }
-        setLoading(false);
-    }, []);
-
-    const handleLogin = (usuario) => {
-        setUsuario(usuario);
-    };
-
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('usuario');
-        setUsuario(null);
-    };
-
-    if (loading) {
-        return <LoadingSpinner fullScreen message="Iniciando EasyEmpresa..." />;
-    }
-
     return (
         <ErrorBoundary>
             <BrowserRouter>
-                <AppRoutes
-                    usuario={usuario}
-                    onLogin={handleLogin}
-                    onLogout={handleLogout}
-                />
+                <AuthProvider>
+                    <AppRoutes />
+                </AuthProvider>
             </BrowserRouter>
         </ErrorBoundary>
     );
