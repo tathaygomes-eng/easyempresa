@@ -37,13 +37,17 @@ export function AuthProvider({ children }) {
     }, []);
 
     const applyUserTheme = useCallback(async (userId) => {
-        const { data } = await supabase
-            .from('empresa_config')
-            .select('cor_principal')
-            .eq('user_id', userId)
-            .single();
-        if (data?.cor_principal) {
-            applyThemeColor(data.cor_principal);
+        try {
+            const { data } = await supabase
+                .from('empresa_config')
+                .select('cor_principal')
+                .eq('user_id', userId)
+                .single();
+            if (data?.cor_principal) {
+                applyThemeColor(data.cor_principal);
+            }
+        } catch (e) {
+            console.warn('Erro ao carregar tema:', e);
         }
     }, []);
 
@@ -71,7 +75,7 @@ export function AuthProvider({ children }) {
                     if (profile) {
                         setUsuario(profile);
                         setPlano(PLANOS[profile.plano] || PLANOS.gratuito);
-                        applyUserTheme(session.user.id);
+                        applyUserTheme(session.user.id).catch(() => {});
                     }
                 }
             } catch (e) {
@@ -91,7 +95,7 @@ export function AuthProvider({ children }) {
                 if (profile) {
                     setUsuario(profile);
                     setPlano(PLANOS[profile.plano] || PLANOS.gratuito);
-                    applyUserTheme(session.user.id);
+                    applyUserTheme(session.user.id).catch(() => {});
                 }
             } else if (event === 'SIGNED_OUT') {
                 setUsuario(null);
@@ -111,7 +115,7 @@ export function AuthProvider({ children }) {
 
         setUsuario(profile);
         setPlano(PLANOS[profile.plano] || PLANOS.gratuito);
-        applyUserTheme(data.user.id);
+        applyUserTheme(data.user.id).catch(() => {});
         return profile;
     };
 
@@ -160,7 +164,7 @@ export function AuthProvider({ children }) {
         if (profile) {
             setUsuario(profile);
             setPlano(PLANOS[profile.plano] || PLANOS.gratuito);
-            applyUserTheme(data.user.id);
+            applyUserTheme(data.user.id).catch(() => {});
         }
         return profile;
     };
