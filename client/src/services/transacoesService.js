@@ -1,4 +1,5 @@
 import { supabase } from '../supabase';
+import { checkPlanLimit } from '../utils/planLimits';
 
 async function getCurrentUserId() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -61,6 +62,7 @@ export async function getTransacao(id) {
 }
 
 export async function criarTransacao(data) {
+    await checkPlanLimit('transacoes');
     const userId = await getCurrentUserId();
 
     const { data: result, error } = await supabase
