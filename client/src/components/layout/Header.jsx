@@ -9,6 +9,7 @@ const pageTitles = {
     '/agenda/calendario': 'Calendario',
     '/agenda/clientes': 'Clientes',
     '/planos': 'Planos',
+    '/configuracoes': 'Configuracoes',
 };
 
 export default function Header() {

@@ -248,3 +248,39 @@ CREATE INDEX IF NOT EXISTS idx_agendamentos_data ON public.agendamentos(data_ini
 CREATE INDEX IF NOT EXISTS idx_interacoes_cliente_id ON public.interacoes(cliente_id);
 CREATE INDEX IF NOT EXISTS idx_interacoes_user_id ON public.interacoes(user_id);
 CREATE INDEX IF NOT EXISTS idx_assinaturas_user_id ON public.assinaturas(user_id);
+
+-- =============================================
+-- Migration: Settings page + theme color
+-- =============================================
+
+-- New columns
+ALTER TABLE public.empresa_config ADD COLUMN IF NOT EXISTS cor_principal TEXT DEFAULT '#3B82F6';
+ALTER TABLE public.empresa_config ADD COLUMN IF NOT EXISTS logo_url TEXT;
+ALTER TABLE public.usuarios ADD COLUMN IF NOT EXISTS foto_url TEXT;
+
+-- Supabase Storage bucket for uploads
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('uploads', 'uploads', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Storage policies
+CREATE POLICY "uploads_insert_own" ON storage.objects
+    FOR INSERT WITH CHECK (
+        bucket_id = 'uploads'
+        AND auth.uid()::text = (storage.foldername(name))[1]
+    );
+
+CREATE POLICY "uploads_select_public" ON storage.objects
+    FOR SELECT USING (bucket_id = 'uploads');
+
+CREATE POLICY "uploads_update_own" ON storage.objects
+    FOR UPDATE USING (
+        bucket_id = 'uploads'
+        AND auth.uid()::text = (storage.foldername(name))[1]
+    );
+
+CREATE POLICY "uploads_delete_own" ON storage.objects
+    FOR DELETE USING (
+        bucket_id = 'uploads'
+        AND auth.uid()::text = (storage.foldername(name))[1]
+    );

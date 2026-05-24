@@ -7,7 +7,7 @@ async function getCurrentUserId() {
 
 export async function obterConfig() {
     const userId = await getCurrentUserId();
-    if (!userId) return { success: true, data: { nome_empresa: '', ramo_atividade: '', objetivo: '[]', onboarding_completo: 0 } };
+    if (!userId) return { success: true, data: { nome_empresa: '', ramo_atividade: '', objetivo: '[]', onboarding_completo: 0, cor_principal: '#3B82F6', logo_url: null } };
 
     const { data } = await supabase
         .from('empresa_config')
@@ -16,7 +16,7 @@ export async function obterConfig() {
         .single();
 
     if (!data) {
-        return { success: true, data: { nome_empresa: '', ramo_atividade: '', objetivo: '[]', onboarding_completo: 0 } };
+        return { success: true, data: { nome_empresa: '', ramo_atividade: '', objetivo: '[]', onboarding_completo: 0, cor_principal: '#3B82F6', logo_url: null } };
     }
     return { success: true, data };
 }
@@ -88,6 +88,56 @@ export async function completarOnboarding(dados) {
         .single();
 
     return { success: true, data: config };
+}
+
+export async function salvarConfigCompleto(dados) {
+    const userId = await getCurrentUserId();
+
+    await supabase
+        .from('empresa_config')
+        .upsert({
+            user_id: userId,
+            nome_empresa: dados.nome_empresa,
+            ramo_atividade: dados.ramo_atividade,
+            objetivo: dados.objetivo,
+            cor_principal: dados.cor_principal,
+            logo_url: dados.logo_url,
+            atualizado_em: new Date().toISOString()
+        }, { onConflict: 'user_id' });
+
+    const { data: config } = await supabase
+        .from('empresa_config')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+    return { success: true, data: config };
+}
+
+export async function uploadFile(file, path) {
+    const { error } = await supabase.storage
+        .from('uploads')
+        .upload(path, file, { upsert: true });
+
+    if (error) throw new Error(error.message);
+
+    const { data } = supabase.storage
+        .from('uploads')
+        .getPublicUrl(path);
+
+    return { success: true, publicUrl: data.publicUrl };
+}
+
+export async function atualizarFotoUsuario(fotoUrl) {
+    const userId = await getCurrentUserId();
+
+    const { error } = await supabase
+        .from('usuarios')
+        .update({ foto_url: fotoUrl, atualizado_em: new Date().toISOString() })
+        .eq('id', userId);
+
+    if (error) throw new Error(error.message);
+    return { success: true };
 }
 
 export function obterCategoriasSugeridas(ramo) {

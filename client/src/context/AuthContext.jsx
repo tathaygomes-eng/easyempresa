@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabase';
 import { PLANOS } from '../config/planos';
+import { applyThemeColor } from '../utils/theme';
 
 const AuthContext = createContext(null);
 
@@ -35,6 +36,17 @@ export function AuthProvider({ children }) {
         return data;
     }, []);
 
+    const applyUserTheme = useCallback(async (userId) => {
+        const { data } = await supabase
+            .from('empresa_config')
+            .select('cor_principal')
+            .eq('user_id', userId)
+            .single();
+        if (data?.cor_principal) {
+            applyThemeColor(data.cor_principal);
+        }
+    }, []);
+
     const refreshProfile = useCallback(async () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
@@ -46,8 +58,9 @@ export function AuthProvider({ children }) {
         if (profile) {
             setUsuario(profile);
             setPlano(PLANOS[profile.plano] || PLANOS.gratuito);
+            applyUserTheme(user.id);
         }
-    }, [loadProfile]);
+    }, [loadProfile, applyUserTheme]);
 
     useEffect(() => {
         // Verificar sessão inicial
@@ -58,6 +71,7 @@ export function AuthProvider({ children }) {
                     if (profile) {
                         setUsuario(profile);
                         setPlano(PLANOS[profile.plano] || PLANOS.gratuito);
+                        applyUserTheme(session.user.id);
                     }
                 }
             } catch (e) {
@@ -77,6 +91,7 @@ export function AuthProvider({ children }) {
                 if (profile) {
                     setUsuario(profile);
                     setPlano(PLANOS[profile.plano] || PLANOS.gratuito);
+                    applyUserTheme(session.user.id);
                 }
             } else if (event === 'SIGNED_OUT') {
                 setUsuario(null);
@@ -96,6 +111,7 @@ export function AuthProvider({ children }) {
 
         setUsuario(profile);
         setPlano(PLANOS[profile.plano] || PLANOS.gratuito);
+        applyUserTheme(data.user.id);
         return profile;
     };
 
@@ -144,6 +160,7 @@ export function AuthProvider({ children }) {
         if (profile) {
             setUsuario(profile);
             setPlano(PLANOS[profile.plano] || PLANOS.gratuito);
+            applyUserTheme(data.user.id);
         }
         return profile;
     };
@@ -170,6 +187,7 @@ export function AuthProvider({ children }) {
         signOut,
         refreshProfile,
         isPlanoAtivo,
+        applyUserTheme,
         planoKey: usuario?.plano || 'gratuito'
     };
 
