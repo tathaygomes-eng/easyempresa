@@ -15,7 +15,10 @@
 .not-found-code {
     font-size: 96px;
     font-weight: 800;
-    color: var(--primary-light);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     line-height: 1;
     margin-bottom: 12px;
     letter-spacing: -4px;

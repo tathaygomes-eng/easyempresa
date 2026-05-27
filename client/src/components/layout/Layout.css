@@ -13,5 +13,11 @@
 
 .app-content {
     flex: 1;
-    padding: 24px 32px;
+    padding: 28px 36px;
+    animation: fadeSlideIn 0.3s ease;
+}
+
+@keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
 }

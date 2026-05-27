@@ -127,7 +127,13 @@ export default function ClienteDetalhes() {
             {showInteracaoModal && (
                 <div className="modal-overlay" onClick={() => setShowInteracaoModal(false)}>
                     <div className="modal" onClick={e => e.stopPropagation()}>
-                        <h2>Nova Interacao</h2>
+                        <div className="modal-header">
+                            <h2>Nova Interacao</h2>
+                            <button className="modal-close" onClick={() => setShowInteracaoModal(false)}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            </button>
+                        </div>
+                        <div className="modal-body">
                         <form onSubmit={handleAddInteracao}>
                             <div className="form-row-group">
                                 <div className="form-row">
@@ -155,6 +161,7 @@ export default function ClienteDetalhes() {
                                 <button type="submit" className="btn-primary">Salvar</button>
                             </div>
                         </form>
+                        </div>
                     </div>
                 </div>
             )}

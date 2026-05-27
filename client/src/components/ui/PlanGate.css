@@ -12,9 +12,17 @@
 }
 
 .plan-gate-icon {
-    color: var(--text-muted);
+    color: var(--primary);
     margin-bottom: 20px;
-    opacity: 0.5;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--primary-glow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .plan-gate-content h3 {
@@ -42,17 +50,19 @@
     align-items: center;
     gap: 8px;
     padding: 12px 28px;
-    background: var(--primary);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: #fff;
     border: none;
     border-radius: var(--radius);
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
 }
 
 .plan-gate-btn:hover {
-    background: var(--primary-dark);
+    background: linear-gradient(135deg, var(--primary-dark) 0%, #115E59 100%);
+    box-shadow: 0 4px 16px rgba(13, 148, 136, 0.35);
     transform: translateY(-1px);
 }

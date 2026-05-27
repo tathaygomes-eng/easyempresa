@@ -29,9 +29,9 @@
 
 .loading-logo-text {
     font-size: 24px;
-    font-weight: 700;
+    font-weight: 800;
     color: var(--text-primary);
-    letter-spacing: -0.5px;
+    letter-spacing: -0.75px;
 }
 
 .loading-message {

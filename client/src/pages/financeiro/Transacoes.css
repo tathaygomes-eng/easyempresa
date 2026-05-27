@@ -64,8 +64,8 @@ table {
 th {
     text-align: left;
     padding: 12px 16px;
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 11px;
+    font-weight: 700;
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -75,8 +75,17 @@ th {
 
 td {
     padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border-light);
     font-size: 14px;
+    transition: background 0.15s ease;
+}
+
+tbody tr {
+    transition: background 0.15s ease;
+}
+
+tbody tr:hover {
+    background: var(--bg-main);
 }
 
 tr:last-child td {
@@ -177,27 +186,83 @@ td strong {
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 200;
+    animation: overlayIn 0.2s ease;
+}
+
+@keyframes overlayIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(8px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .modal {
     background: var(--bg-card);
-    border-radius: var(--radius-lg);
-    padding: 24px;
+    border-radius: var(--radius-xl);
     width: 560px;
     max-width: 90vw;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-lg);
+    animation: modalIn 0.25s ease;
+    border: 1px solid var(--border);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.modal-header h2 {
+    font-size: 17px;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-primary);
+    letter-spacing: -0.2px;
+}
+
+.modal-close {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: var(--radius);
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.modal-close:hover {
+    background: var(--bg-main);
+    color: var(--text-primary);
+}
+
+.modal-body {
+    padding: 20px 24px;
 }
 
 .modal h2 {
-    font-size: 18px;
+    font-size: 17px;
+    font-weight: 700;
     margin-bottom: 20px;
+    letter-spacing: -0.2px;
 }
 
 .form-row {
@@ -209,23 +274,25 @@ td strong {
 
 .form-row label {
     font-size: 13px;
-    font-weight: 500;
-    color: var(--text-secondary);
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
 .form-row input, .form-row select, .form-row textarea {
     padding: 10px 12px;
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     border-radius: var(--radius);
     font-size: 14px;
     color: var(--text-primary);
-    background: var(--bg-card);
+    background: var(--bg-main);
+    transition: all 0.2s ease;
 }
 
 .form-row input:focus, .form-row select:focus, .form-row textarea:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+    background: var(--bg-card);
 }
 
 .form-row-group {
@@ -242,12 +309,14 @@ td strong {
 .radio-label {
     flex: 1;
     padding: 10px;
-    border: 2px solid var(--border);
+    border: 1.5px solid var(--border);
     border-radius: var(--radius);
     text-align: center;
     cursor: pointer;
-    font-weight: 500;
-    transition: all 0.15s;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.2s ease;
+    background: var(--bg-main);
 }
 
 .radio-label input {

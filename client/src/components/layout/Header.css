@@ -1,7 +1,9 @@
 .header {
     height: var(--header-height);
-    background: var(--bg-card);
-    border-bottom: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -9,6 +11,7 @@
     position: sticky;
     top: 0;
     z-index: 50;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .header-left {
@@ -30,16 +33,18 @@
 }
 
 .header-title {
-    font-size: 20px;
-    font-weight: 600;
+    font-size: 22px;
+    font-weight: 700;
     color: var(--text-primary);
     line-height: 1.2;
+    letter-spacing: -0.5px;
 }
 
 .header-date {
     font-size: 12px;
-    color: var(--text-muted);
+    color: var(--text-secondary);
     text-transform: capitalize;
+    font-weight: 500;
 }
 
 .header-right {
@@ -58,9 +63,12 @@
     justify-content: center;
     color: var(--text-secondary);
     cursor: pointer;
-    transition: background 0.15s;
+    transition: all 0.2s ease;
+    border: 2px solid var(--border);
 }
 
 .header-avatar:hover {
-    background: var(--border);
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-glow);
 }

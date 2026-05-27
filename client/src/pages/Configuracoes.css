@@ -11,13 +11,19 @@
     padding: 24px;
     margin-bottom: 20px;
     box-shadow: var(--shadow);
+    transition: box-shadow 0.2s ease;
+}
+
+.settings-card:hover {
+    box-shadow: var(--shadow-md);
 }
 
 .settings-card h2 {
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 700;
     margin-bottom: 16px;
     color: var(--text-primary);
+    letter-spacing: -0.2px;
 }
 
 .settings-card p {
@@ -91,8 +97,8 @@
 .form-group label {
     display: block;
     font-size: 13px;
-    font-weight: 500;
-    color: var(--text-secondary);
+    font-weight: 600;
+    color: var(--text-primary);
     margin-bottom: 6px;
 }
 
@@ -100,19 +106,20 @@
 .form-group select {
     width: 100%;
     padding: 10px 14px;
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     border-radius: var(--radius);
     font-size: 14px;
     color: var(--text-primary);
-    background: var(--bg-card);
-    transition: border-color 0.15s;
+    background: var(--bg-main);
+    transition: all 0.2s ease;
 }
 
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+    background: var(--bg-card);
 }
 
 .form-group input:disabled {

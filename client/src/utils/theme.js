@@ -32,5 +32,6 @@ export function applyThemeColor(hex) {
 
     root.style.setProperty('--primary-dark', `hsl(${h}, ${s}%, ${darkL}%)`);
     root.style.setProperty('--primary-light', `hsl(${h}, ${s}%, ${lightL}%)`);
+    root.style.setProperty('--primary-glow', `hsla(${h}, ${s}%, ${l}%, 0.15)`);
     root.style.setProperty('--sidebar-active', hex);
 }
