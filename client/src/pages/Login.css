@@ -138,3 +138,40 @@
 .login-footer button:hover {
     text-decoration: underline;
 }
+
+.forgot-password-link {
+    text-align: right;
+    margin-top: -12px;
+    margin-bottom: 16px;
+}
+
+.forgot-password-link button {
+    background: none;
+    border: none;
+    color: #1E3A5F;
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.forgot-password-link button:hover {
+    text-decoration: underline;
+}
+
+.login-success {
+    background: #D1FAE5;
+    color: #065F46;
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    margin-bottom: 20px;
+    text-align: center;
+    line-height: 1.5;
+}
+
+.form-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 6px;
+    line-height: 1.4;
+}
