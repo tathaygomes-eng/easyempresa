@@ -6,12 +6,9 @@ async function getCurrentUserId() {
 }
 
 export async function listarCategorias(params = {}) {
-    const userId = await getCurrentUserId();
-
     let query = supabase
         .from('categorias')
         .select('*')
-        .or(`user_id.is.null,user_id.eq.${userId}`)
         .eq('ativo', 1);
 
     if (params.tipo) query = query.eq('tipo', params.tipo);
