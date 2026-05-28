@@ -68,6 +68,11 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         // Verificar sessão inicial
+        const timeoutId = setTimeout(() => {
+            console.warn('Timeout ao carregar sessao');
+            setLoading(false);
+        }, 10000);
+
         supabase.auth.getSession().then(async ({ data: { session } }) => {
             try {
                 if (session?.user) {
@@ -81,10 +86,12 @@ export function AuthProvider({ children }) {
             } catch (e) {
                 console.error('Erro ao carregar sessao:', e);
             } finally {
+                clearTimeout(timeoutId);
                 setLoading(false);
             }
         }).catch((e) => {
             console.error('Erro ao obter sessao:', e);
+            clearTimeout(timeoutId);
             setLoading(false);
         });
 
