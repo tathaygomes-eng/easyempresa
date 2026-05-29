@@ -121,20 +121,23 @@ export function AuthProvider({ children }) {
     }, [loadProfile]);
 
     const signIn = async (email, password) => {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        // Timeout de 10s para toda operacao de login
+        const withTimeout = (promise, ms = 10000) => {
+            const timeout = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Tempo esgotado. Verifique sua conexao com a internet.')), ms)
+            );
+            return Promise.race([promise, timeout]);
+        };
+
+        const { data, error } = await withTimeout(
+            supabase.auth.signInWithPassword({ email, password })
+        );
         if (error) throw new Error(error.message);
 
-        // Timeout de 8s para nao travar o loading
-        const timeout = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Tempo esgotado. Verifique sua conexao.')), 8000)
-        );
-
-        const work = Promise.all([
+        const [profile] = await withTimeout(Promise.all([
             loadProfile(data.user.id),
             applyUserTheme(data.user.id).catch(() => {})
-        ]);
-
-        const [profile] = await Promise.race([work, timeout]);
+        ]));
         if (!profile) throw new Error('Perfil nao encontrado.');
 
         setUsuario(profile);
