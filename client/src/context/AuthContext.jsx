@@ -121,6 +121,7 @@ export function AuthProvider({ children }) {
     }, [loadProfile]);
 
     const signIn = async (email, password) => {
+        console.log('[Auth] Iniciando signIn...');
         // Timeout de 10s para toda operacao de login
         const withTimeout = (promise, ms = 10000) => {
             const timeout = new Promise((_, reject) =>
@@ -129,19 +130,24 @@ export function AuthProvider({ children }) {
             return Promise.race([promise, timeout]);
         };
 
+        console.log('[Auth] Chamando signInWithPassword...');
         const { data, error } = await withTimeout(
             supabase.auth.signInWithPassword({ email, password })
         );
+        console.log('[Auth] signInWithPassword resultado:', error ? 'ERRO: ' + error.message : 'OK, user=' + data?.user?.id);
         if (error) throw new Error(error.message);
 
+        console.log('[Auth] Carregando profile...');
         const [profile] = await withTimeout(Promise.all([
             loadProfile(data.user.id),
             applyUserTheme(data.user.id).catch(() => {})
         ]));
+        console.log('[Auth] Profile carregado:', profile ? 'OK' : 'NULL');
         if (!profile) throw new Error('Perfil nao encontrado.');
 
         setUsuario(profile);
         setPlano(PLANOS[profile.plano] || PLANOS.gratuito);
+        console.log('[Auth] Login completo!');
         return profile;
     };
 
