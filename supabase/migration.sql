@@ -284,3 +284,34 @@ CREATE POLICY "uploads_delete_own" ON storage.objects
         bucket_id = 'uploads'
         AND auth.uid()::text = (storage.foldername(name))[1]
     );
+
+-- =============================================
+-- Categorias padrao do sistema (user_id = NULL)
+-- =============================================
+
+-- Receitas
+INSERT INTO public.categorias (nome, tipo, cor, icone, ativo, user_id) VALUES
+    ('Salario', 'receita', '#10B981', 'briefcase', 1, NULL),
+    ('Vendas', 'receita', '#0D9488', 'shopping-cart', 1, NULL),
+    ('Servicos', 'receita', '#06B6D4', 'zap', 1, NULL),
+    ('Investimentos', 'receita', '#3B82F6', 'plus-circle', 1, NULL),
+    ('Freelance', 'receita', '#6366F1', 'users', 1, NULL),
+    ('Aluguel Recebido', 'receita', '#8B5CF6', 'home', 1, NULL),
+    ('Outros Receitas', 'receita', '#84CC16', 'more-horizontal', 1, NULL)
+ON CONFLICT DO NOTHING;
+
+-- Despesas
+INSERT INTO public.categorias (nome, tipo, cor, icone, ativo, user_id) VALUES
+    ('Aluguel', 'despesa', '#EF4444', 'home', 1, NULL),
+    ('Fornecedores', 'despesa', '#F97316', 'truck', 1, NULL),
+    ('Marketing', 'despesa', '#EC4899', 'megaphone', 1, NULL),
+    ('Transporte', 'despesa', '#F59E0B', 'car', 1, NULL),
+    ('Alimentacao', 'despesa', '#84CC16', 'utensils', 1, NULL),
+    ('Impostos', 'despesa', '#EF4444', 'file-text', 1, NULL),
+    ('Salarios', 'despesa', '#6366F1', 'users', 1, NULL),
+    ('Internet', 'despesa', '#06B6D4', 'wifi', 1, NULL),
+    ('Energia', 'despesa', '#F59E0B', 'zap', 1, NULL),
+    ('Agua', 'despesa', '#3B82F6', 'droplet', 1, NULL),
+    ('Manutencao', 'despesa', '#78716C', 'plus-circle', 1, NULL),
+    ('Outros Despesas', 'despesa', '#6B7280', 'more-horizontal', 1, NULL)
+ON CONFLICT DO NOTHING;

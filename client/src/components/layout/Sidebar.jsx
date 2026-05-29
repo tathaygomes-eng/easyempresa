@@ -40,7 +40,7 @@ const icons = {
     settings: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
 };
 
-export default function Sidebar({ usuario, onLogout }) {
+export default function Sidebar({ usuario, onLogout, isOpen, onClose }) {
     const location = useLocation();
     const [openMenus, setOpenMenus] = useState({});
     const { planoKey } = useAuth();
@@ -48,6 +48,10 @@ export default function Sidebar({ usuario, onLogout }) {
 
     const toggleMenu = (label) => {
         setOpenMenus(prev => ({ ...prev, [label]: !prev[label] }));
+    };
+
+    const handleNavClick = () => {
+        if (onClose) onClose();
     };
 
     const isActive = (item) => {
@@ -62,7 +66,7 @@ export default function Sidebar({ usuario, onLogout }) {
     };
 
     return (
-        <aside className="sidebar">
+        <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
             <div className="sidebar-header">
                 <div className="sidebar-logo">
                     <img src="/logo.png" alt="EasyEmpresa" className="sidebar-logo-img" />
@@ -92,7 +96,7 @@ export default function Sidebar({ usuario, onLogout }) {
                 {menuItems.map(item => (
                     <div key={item.label} className="nav-item-wrapper">
                         {item.path ? (
-                            <NavLink to={item.path} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+                            <NavLink to={item.path} onClick={handleNavClick} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
                                 {icons[item.icon]}
                                 <span>{item.label}</span>
                             </NavLink>
@@ -114,6 +118,7 @@ export default function Sidebar({ usuario, onLogout }) {
                                                 <NavLink
                                                     key={child.path}
                                                     to={locked ? '/planos' : child.path}
+                                                    onClick={handleNavClick}
                                                     className={({ isActive }) => `nav-child ${isActive && !locked ? 'active' : ''} ${locked ? 'locked' : ''}`}
                                                 >
                                                     <span>{child.label}</span>

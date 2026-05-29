@@ -12,7 +12,7 @@ const pageTitles = {
     '/configuracoes': 'Configuracoes',
 };
 
-export default function Header() {
+export default function Header({ onMenuClick }) {
     const location = useLocation();
 
     const getTitle = () => {
@@ -31,6 +31,9 @@ export default function Header() {
         <header className="header">
             <div className="header-left">
                 <div className="header-title-row">
+                    <button className="header-menu-btn" onClick={onMenuClick}>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                    </button>
                     <img src="/logo.png" alt="EasyEmpresa" className="header-logo-img" />
                     <h1 className="header-title">{getTitle()}</h1>
                 </div>

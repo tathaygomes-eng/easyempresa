@@ -17,7 +17,38 @@
     animation: fadeSlideIn 0.3s ease;
 }
 
+.sidebar-overlay {
+    display: none;
+}
+
 @keyframes fadeSlideIn {
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+    .app-main {
+        margin-left: 0;
+    }
+
+    .app-content {
+        padding: 16px;
+        padding-bottom: calc(var(--bottom-nav-height) + var(--mobile-safe-bottom) + 16px);
+    }
+
+    .sidebar-overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 99;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .sidebar-overlay.visible {
+        opacity: 1;
+        pointer-events: auto;
+    }
 }

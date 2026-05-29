@@ -28,6 +28,8 @@
     --shadow-lg: 0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);
     --sidebar-width: 260px;
     --header-height: 64px;
+    --bottom-nav-height: 60px;
+    --mobile-safe-bottom: env(safe-area-inset-bottom, 0px);
     --font: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
 }
 

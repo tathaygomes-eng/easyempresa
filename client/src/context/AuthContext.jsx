@@ -76,11 +76,14 @@ export function AuthProvider({ children }) {
         supabase.auth.getSession().then(async ({ data: { session } }) => {
             try {
                 if (session?.user) {
-                    const profile = await loadProfile(session.user.id);
+                    // Rodar em paralelo para ser mais rapido
+                    const [profile] = await Promise.all([
+                        loadProfile(session.user.id),
+                        applyUserTheme(session.user.id).catch(() => {})
+                    ]);
                     if (profile) {
                         setUsuario(profile);
                         setPlano(PLANOS[profile.plano] || PLANOS.gratuito);
-                        applyUserTheme(session.user.id).catch(() => {});
                     }
                 }
             } catch (e) {
@@ -117,12 +120,14 @@ export function AuthProvider({ children }) {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw new Error(error.message);
 
-        const profile = await loadProfile(data.user.id);
+        const [profile] = await Promise.all([
+            loadProfile(data.user.id),
+            applyUserTheme(data.user.id).catch(() => {})
+        ]);
         if (!profile) throw new Error('Perfil nao encontrado.');
 
         setUsuario(profile);
         setPlano(PLANOS[profile.plano] || PLANOS.gratuito);
-        applyUserTheme(data.user.id).catch(() => {});
         return profile;
     };
 
@@ -163,9 +168,6 @@ export function AuthProvider({ children }) {
                 objetivo: '[]',
                 onboarding_completo: 0
             }, { onConflict: 'user_id' });
-
-        // Seed categorias do sistema
-        await seedCategorias(data.user.id);
 
         const profile = await loadProfile(data.user.id);
         if (profile) {
@@ -213,32 +215,4 @@ export function useAuth() {
     const context = useContext(AuthContext);
     if (!context) throw new Error('useAuth deve ser usado dentro de AuthProvider');
     return context;
-}
-
-// Seed categorias do sistema para novos usuarios
-async function seedCategorias(userId) {
-    const SYSTEM_CATEGORIES = [
-        { nome: 'Vendas', tipo: 'receita', cor: '#10B981', icone: 'shopping-cart' },
-        { nome: 'Servicos', tipo: 'receita', cor: '#3B82F6', icone: 'briefcase' },
-        { nome: 'Consultoria', tipo: 'receita', cor: '#8B5CF6', icone: 'message-circle' },
-        { nome: 'Comissoes', tipo: 'receita', cor: '#F59E0B', icone: 'percent' },
-        { nome: 'Outros Recebimentos', tipo: 'receita', cor: '#6366F1', icone: 'plus-circle' },
-        { nome: 'Aluguel', tipo: 'despesa', cor: '#EF4444', icone: 'home' },
-        { nome: 'Salarios', tipo: 'despesa', cor: '#F97316', icone: 'users' },
-        { nome: 'Impostos', tipo: 'despesa', cor: '#DC2626', icone: 'file-text' },
-        { nome: 'Energia', tipo: 'despesa', cor: '#FBBF24', icone: 'zap' },
-        { nome: 'Agua', tipo: 'despesa', cor: '#06B6D4', icone: 'droplet' },
-        { nome: 'Internet', tipo: 'despesa', cor: '#8B5CF6', icone: 'wifi' },
-        { nome: 'Marketing', tipo: 'despesa', cor: '#EC4899', icone: 'megaphone' },
-        { nome: 'Transporte', tipo: 'despesa', cor: '#14B8A6', icone: 'truck' },
-        { nome: 'Outros Gastos', tipo: 'despesa', cor: '#6B7280', icone: 'more-horizontal' },
-    ];
-
-    const rows = SYSTEM_CATEGORIES.map(cat => ({
-        ...cat,
-        user_id: null,
-        ativo: 1
-    }));
-
-    await supabase.from('categorias').insert(rows);
 }

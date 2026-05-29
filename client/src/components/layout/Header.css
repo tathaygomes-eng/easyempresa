@@ -72,3 +72,39 @@
     color: var(--primary);
     background: var(--primary-glow);
 }
+
+.header-menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--radius);
+    transition: background 0.2s;
+}
+
+.header-menu-btn:hover {
+    background: var(--border-light);
+}
+
+@media (max-width: 768px) {
+    .header {
+        padding: 0 16px;
+        height: 56px;
+    }
+
+    .header-menu-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .header-title {
+        font-size: 17px;
+    }
+
+    .header-date {
+        display: none;
+    }
+}
