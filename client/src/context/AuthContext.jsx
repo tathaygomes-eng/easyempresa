@@ -98,22 +98,11 @@ export function AuthProvider({ children }) {
             setLoading(false);
         });
 
-        // Listener de mudanças de autenticação
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            try {
-                if (event === 'SIGNED_IN' && session?.user) {
-                    const profile = await loadProfile(session.user.id);
-                    if (profile) {
-                        setUsuario(profile);
-                        setPlano(PLANOS[profile.plano] || PLANOS.gratuito);
-                        applyUserTheme(session.user.id).catch(() => {});
-                    }
-                } else if (event === 'SIGNED_OUT') {
-                    setUsuario(null);
-                    setPlano(null);
-                }
-            } catch (e) {
-                console.error('Erro no onAuthStateChange:', e);
+        // Listener: so SIGNED_OUT (signIn/signUp ja cuidam do SIGNED_IN)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+            if (event === 'SIGNED_OUT') {
+                setUsuario(null);
+                setPlano(null);
             }
         });
 
