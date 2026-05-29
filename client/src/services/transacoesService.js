@@ -82,7 +82,7 @@ export async function criarTransacao(data) {
             recorrencia_tipo: data.recorrencia_tipo || null,
             user_id: userId
         })
-        .select()
+        .select('id, tipo, descricao, valor, data_transacao, data_vencimento, status, categoria_id, cliente_id, forma_pagamento, observacoes, recorrente, recorrencia_tipo, user_id')
         .single();
 
     if (error) throw new Error(error.message);

@@ -58,7 +58,7 @@ export async function criarAgendamento(data) {
             status: data.status || 'agendado',
             user_id: userId
         })
-        .select()
+        .select('id, titulo, descricao, data_inicio, data_fim, cliente_id, status, user_id')
         .single();
 
     if (error) throw new Error(error.message);

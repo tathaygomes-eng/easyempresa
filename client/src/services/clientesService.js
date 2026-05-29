@@ -63,7 +63,7 @@ export async function criarCliente(data) {
     const { data: result, error } = await supabase
         .from('clientes')
         .insert({ ...data, ativo: 1, user_id: userId })
-        .select()
+        .select('id, nome, email, telefone, cpf_cnpj, endereco, cidade, estado, observacoes, ativo, user_id, criado_em')
         .single();
 
     if (error) throw new Error(error.message);
@@ -112,7 +112,7 @@ export async function criarInteracao(clienteId, data) {
             data_interacao: data.data_interacao || new Date().toISOString(),
             user_id: userId
         })
-        .select()
+        .select('id, cliente_id, tipo, descricao, data_interacao, user_id')
         .single();
 
     if (error) throw new Error(error.message);
