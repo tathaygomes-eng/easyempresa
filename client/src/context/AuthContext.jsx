@@ -100,16 +100,20 @@ export function AuthProvider({ children }) {
 
         // Listener de mudanças de autenticação
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (event === 'SIGNED_IN' && session?.user) {
-                const profile = await loadProfile(session.user.id);
-                if (profile) {
-                    setUsuario(profile);
-                    setPlano(PLANOS[profile.plano] || PLANOS.gratuito);
-                    applyUserTheme(session.user.id).catch(() => {});
+            try {
+                if (event === 'SIGNED_IN' && session?.user) {
+                    const profile = await loadProfile(session.user.id);
+                    if (profile) {
+                        setUsuario(profile);
+                        setPlano(PLANOS[profile.plano] || PLANOS.gratuito);
+                        applyUserTheme(session.user.id).catch(() => {});
+                    }
+                } else if (event === 'SIGNED_OUT') {
+                    setUsuario(null);
+                    setPlano(null);
                 }
-            } else if (event === 'SIGNED_OUT') {
-                setUsuario(null);
-                setPlano(null);
+            } catch (e) {
+                console.error('Erro no onAuthStateChange:', e);
             }
         });
 
@@ -120,10 +124,17 @@ export function AuthProvider({ children }) {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw new Error(error.message);
 
-        const [profile] = await Promise.all([
+        // Timeout de 8s para nao travar o loading
+        const timeout = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Tempo esgotado. Verifique sua conexao.')), 8000)
+        );
+
+        const work = Promise.all([
             loadProfile(data.user.id),
             applyUserTheme(data.user.id).catch(() => {})
         ]);
+
+        const [profile] = await Promise.race([work, timeout]);
         if (!profile) throw new Error('Perfil nao encontrado.');
 
         setUsuario(profile);
