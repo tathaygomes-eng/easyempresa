@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import BottomNav from './BottomNav';
+import ChatWidget from './ChatWidget';
 import './Layout.css';
 
 export default function Layout({ children, usuario, onLogout }) {
@@ -18,6 +19,7 @@ export default function Layout({ children, usuario, onLogout }) {
                 </main>
                 <BottomNav />
             </div>
+            <ChatWidget />
         </div>
     );
 }

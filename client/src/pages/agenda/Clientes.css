@@ -38,3 +38,15 @@
 .search-box input::placeholder {
     color: var(--text-muted);
 }
+
+@media (max-width: 768px) {
+    .search-box {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .search-box {
+        width: 100%;
+    }
+}

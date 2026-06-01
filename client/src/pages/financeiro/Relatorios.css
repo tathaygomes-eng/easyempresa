@@ -95,3 +95,38 @@
     color: var(--text-muted);
     padding: 32px;
 }
+
+@media (max-width: 768px) {
+    .resumo-cards {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .resumo-card {
+        padding: 16px;
+    }
+
+    .resumo-card strong {
+        font-size: 22px;
+    }
+
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-panel {
+        padding: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .resumo-cards {
+        grid-template-columns: 1fr;
+    }
+    .resumo-card strong {
+        font-size: 22px;
+    }
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+}

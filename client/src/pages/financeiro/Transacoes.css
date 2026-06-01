@@ -341,3 +341,83 @@ td strong {
     gap: 8px;
     margin-top: 20px;
 }
+
+@media (max-width: 768px) {
+    .transacoes-page .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .filters {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+    .filters select {
+        flex: 1;
+        min-width: 0;
+    }
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    table {
+        min-width: 500px;
+    }
+    .form-row-group {
+        grid-template-columns: 1fr;
+    }
+    .modal {
+        max-width: 95vw;
+        margin: 0 8px;
+    }
+    .modal-body {
+        padding: 16px;
+    }
+    .radio-group {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .filters {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .filters select {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+        min-width: 500px;
+    }
+
+    .form-row-group {
+        grid-template-columns: 1fr;
+    }
+
+    .modal {
+        max-width: 95vw;
+        margin: 0 8px;
+    }
+
+    .modal-body {
+        padding: 16px;
+    }
+
+    .radio-group {
+        flex-direction: column;
+    }
+}

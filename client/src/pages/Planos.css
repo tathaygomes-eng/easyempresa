@@ -273,3 +273,42 @@
         max-width: 400px;
     }
 }
+
+@media (max-width: 768px) {
+    .planos-page {
+        padding: 16px 0;
+        gap: 24px;
+    }
+
+    .planos-header h1 {
+        font-size: 24px;
+    }
+
+    .planos-header p {
+        font-size: 14px;
+    }
+
+    .planos-grid {
+        padding: 0 12px;
+    }
+
+    .plano-card {
+        padding: 20px;
+    }
+
+    .plano-preco .valor {
+        font-size: 34px;
+    }
+}
+
+@media (max-width: 768px) {
+    .planos-header h1 {
+        font-size: 24px;
+    }
+    .planos-header p {
+        font-size: 14px;
+    }
+    .plano-preco .valor {
+        font-size: 32px;
+    }
+}

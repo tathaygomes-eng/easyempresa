@@ -222,3 +222,57 @@ tbody tr:hover {
     padding: 2px 8px;
     border-radius: 12px;
 }
+
+@media (max-width: 768px) {
+    .cliente-info h2 {
+        font-size: 18px;
+    }
+
+    .tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+    }
+
+    .tab {
+        padding: 10px 14px;
+        font-size: 13px;
+        flex-shrink: 0;
+    }
+
+    .tab-content {
+        padding: 16px;
+    }
+
+    .timeline {
+        padding-left: 20px;
+    }
+
+    .day-item {
+        padding: 12px 16px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+}
+
+@media (max-width: 768px) {
+    .tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .tab {
+        padding: 10px 14px;
+        white-space: nowrap;
+        font-size: 13px;
+    }
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    table {
+        min-width: 400px;
+    }
+    .cliente-info h2 {
+        font-size: 18px;
+    }
+}

@@ -128,6 +128,73 @@
     text-align: center;
 }
 
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .cal-day {
+        min-height: 60px;
+        padding: 4px;
+    }
+    .cal-day-num {
+        font-size: 11px;
+    }
+    .cal-day.today .cal-day-num {
+        width: 22px;
+        height: 22px;
+        font-size: 10px;
+    }
+    .cal-event {
+        font-size: 8px;
+        padding: 1px 2px;
+    }
+    .cal-nav h2 {
+        font-size: 16px;
+        min-width: 140px;
+    }
+}
+
+@media (max-width: 768px) {
+    .cal-day {
+        min-height: 60px;
+        padding: 4px;
+    }
+
+    .cal-day-num {
+        font-size: 11px;
+    }
+
+    .cal-day.today .cal-day-num {
+        width: 22px;
+        height: 22px;
+        font-size: 10px;
+    }
+
+    .cal-event {
+        font-size: 8px;
+        padding: 1px 2px;
+    }
+
+    .cal-nav h2 {
+        font-size: 16px;
+        min-width: 140px;
+    }
+}
+
 .day-detail {
     background: var(--bg-card);
     border-radius: var(--radius-lg);

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from '../../components/ui/Toast';
 import { listarAgendamentos, criarAgendamento, atualizarAgendamento, excluirAgendamento, alterarStatusAgendamento } from '../../services/agendamentosService';
 import { listarClientes } from '../../services/clientesService';
+import { scheduleReminder, rescheduleReminder, cancelReminder, requestNotificationPermission, createNotificationChannel } from '../../services/notificationService';
 import { formatDateTime, statusColors, statusLabels } from '../../utils/formatters';
 import './Calendario.css';
 
@@ -39,6 +40,8 @@ export default function Calendario() {
     useEffect(() => { fetchData(); }, [currentDate]);
     useEffect(() => {
         listarClientes({ limit: 100 }).then(res => setClientes(res.data)).catch(console.error);
+        requestNotificationPermission();
+        createNotificationChannel();
     }, []);
 
     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -54,18 +57,42 @@ export default function Calendario() {
     const handleSubmit = (e) => {
         e.preventDefault();
         const promise = editingId ? atualizarAgendamento(editingId, form) : criarAgendamento(form);
-        promise.then(() => { setShowModal(false); setEditingId(null); setForm(emptyForm); fetchData(); toast.success(editingId ? 'Agendamento atualizado!' : 'Agendamento criado!'); }).catch(err => toast.error(err.message));
+        promise.then((res) => {
+            setShowModal(false);
+            setEditingId(null);
+            setForm(emptyForm);
+            fetchData();
+            toast.success(editingId ? 'Agendamento atualizado!' : 'Agendamento criado!');
+
+            if (form.lembrete === 1 && form.data_inicio) {
+                if (editingId) {
+                    rescheduleReminder({ ...form, id: editingId });
+                } else if (res?.data?.id) {
+                    scheduleReminder({ ...form, id: res.data.id });
+                }
+            }
+        }).catch(err => toast.error(err.message));
     };
 
     const handleEdit = (a) => {
         setEditingId(a.id);
-        setForm({ ...a, cliente_id: a.cliente_id || '' });
+        setForm({
+            ...a,
+            cliente_id: a.cliente_id || '',
+            local: a.local || '',
+            lembrete: a.lembrete_minutos != null ? 1 : 0,
+            lembrete_minutos: a.lembrete_minutos || 30,
+        });
         setShowModal(true);
     };
 
     const handleDelete = (id) => {
         if (confirm('Deseja excluir este agendamento?')) {
-            excluirAgendamento(id).then(() => { fetchData(); toast.success('Agendamento excluido!'); }).catch(err => toast.error(err.message));
+            excluirAgendamento(id).then(() => {
+                cancelReminder(id);
+                fetchData();
+                toast.success('Agendamento excluido!');
+            }).catch(err => toast.error(err.message));
         }
     };
 
@@ -199,6 +226,31 @@ export default function Calendario() {
                                     <label>Cor</label>
                                     <input type="color" value={form.cor} onChange={e => setForm({ ...form, cor: e.target.value })} />
                                 </div>
+                            </div>
+                            <div className="form-row-group">
+                                <div className="form-row">
+                                    <label className="checkbox-label">
+                                        <input
+                                            type="checkbox"
+                                            checked={form.lembrete === 1}
+                                            onChange={e => setForm({ ...form, lembrete: e.target.checked ? 1 : 0 })}
+                                        />
+                                        <span>Receber lembrete</span>
+                                    </label>
+                                </div>
+                                {form.lembrete === 1 && (
+                                    <div className="form-row">
+                                        <label>Notificar antes</label>
+                                        <select value={form.lembrete_minutos} onChange={e => setForm({ ...form, lembrete_minutos: Number(e.target.value) })}>
+                                            <option value={5}>5 minutos</option>
+                                            <option value={15}>15 minutos</option>
+                                            <option value={30}>30 minutos</option>
+                                            <option value={60}>1 hora</option>
+                                            <option value={120}>2 horas</option>
+                                            <option value={1440}>1 dia</option>
+                                        </select>
+                                    </div>
+                                )}
                             </div>
                             <div className="form-actions">
                                 <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>

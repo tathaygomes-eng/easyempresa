@@ -5,20 +5,31 @@ const config: CapacitorConfig = {
   appName: 'EasyEmpresa',
   webDir: 'dist',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    cleartext: true
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 1500,
+      launchShowDuration: 2000,
       backgroundColor: '#1E3A5F',
       showSpinner: false,
       androidSplashResourceName: 'splash',
-      androidScaleType: 'CENTER_CROP'
+      androidScaleType: 'CENTER_CROP',
+      splashFullScreen: true,
+      splashImmersive: true
     },
     StatusBar: {
       style: 'LIGHT',
       backgroundColor: '#1E3A5F'
+    },
+    LocalNotifications: {
+      smallIcon: 'ic_launcher',
+      iconColor: '#1E3A5F'
     }
+  },
+  android: {
+    allowMixedContent: true,
+    backgroundColor: '#1E3A5F'
   }
 };
 

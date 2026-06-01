@@ -55,10 +55,12 @@ export async function criarAgendamento(data) {
             data_inicio: data.data_inicio,
             data_fim: data.data_fim || null,
             cliente_id: data.cliente_id ? Number(data.cliente_id) : null,
+            local: data.local || null,
+            lembrete_minutos: data.lembrete != null && data.lembrete !== 1 ? null : (data.lembrete_minutos || 30),
             status: data.status || 'agendado',
             user_id: userId
         })
-        .select('id, titulo, descricao, data_inicio, data_fim, cliente_id, status, user_id')
+        .select('id, titulo, descricao, data_inicio, data_fim, cliente_id, local, lembrete_minutos, status, user_id')
         .single();
 
     if (error) throw new Error(error.message);

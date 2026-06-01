@@ -176,4 +176,20 @@
         align-items: flex-start;
         gap: 12px;
     }
+
+    .cat-filters {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .cat-filter-btn {
+        flex: 1;
+        text-align: center;
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
+    .cat-card {
+        padding: 12px 14px;
+    }
 }
