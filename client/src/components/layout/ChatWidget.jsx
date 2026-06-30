@@ -5,7 +5,10 @@ import './ChatWidget.css';
 export default function ChatWidget() {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
-        { role: 'bot', text: 'Ola! Sou o assistente do EasyEmpresa. Como posso ajudar?' }
+        {
+            role: 'bot',
+            text: 'Olá! Sou o assistente do EasyEmpresa. Posso ajudar com gestão de negócios e finanças!\n\nPergunte sobre qualquer coisa ou escolha uma sugestão abaixo.'
+        }
     ]);
     const [input, setInput] = useState('');
     const [typing, setTyping] = useState(false);
@@ -15,23 +18,37 @@ export default function ChatWidget() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, typing]);
 
-    const sendMessage = (text) => {
-        if (!text.trim()) return;
+    const sendMessage = async (text) => {
+        if (!text.trim() || typing) return;
         const userMsg = text.trim();
+
         setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
         setInput('');
         setTyping(true);
 
-        setTimeout(() => {
-            const response = getChatbotResponse(userMsg);
+        try {
+            const response = await getChatbotResponse(userMsg, messages);
             setMessages(prev => [...prev, { role: 'bot', text: response }]);
+        } catch {
+            setMessages(prev => [...prev, {
+                role: 'bot',
+                text: 'Desculpe, tive um problema para responder. Tente novamente.'
+            }]);
+        } finally {
             setTyping(false);
-        }, 600);
+        }
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
         sendMessage(input);
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage(input);
+        }
     };
 
     return (
@@ -54,7 +71,7 @@ export default function ChatWidget() {
                         {messages.map((msg, i) => (
                             <div key={i} className={`chat-msg chat-msg-${msg.role}`}>
                                 <div className="chat-msg-bubble">
-                                    {msg.text.split('\n').map((line, j) => <p key={j}>{line}</p>)}
+                                    {msg.text.split('\n').map((line, j) => <p key={j}>{line || '\u00A0'}</p>)}
                                 </div>
                             </div>
                         ))}
@@ -67,10 +84,14 @@ export default function ChatWidget() {
                         )}
                         <div ref={messagesEndRef} />
                     </div>
+
                     {messages.length <= 2 && (
                         <div className="chat-suggestions">
+                            <p className="suggestions-title">Sugestões:</p>
                             {SUGGESTIONS.map((s, i) => (
-                                <button key={i} className="chat-suggestion-btn" onClick={() => sendMessage(s)}>{s}</button>
+                                <button key={i} className="chat-suggestion-btn" onClick={() => sendMessage(s)} disabled={typing}>
+                                    {s}
+                                </button>
                             ))}
                         </div>
                     )}
@@ -79,6 +100,7 @@ export default function ChatWidget() {
                             type="text"
                             value={input}
                             onChange={e => setInput(e.target.value)}
+                            onKeyDown={handleKeyDown}
                             placeholder="Digite sua pergunta..."
                             disabled={typing}
                         />

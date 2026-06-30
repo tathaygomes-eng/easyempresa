@@ -217,7 +217,55 @@
 .chat-suggestion-btn:hover {
     border-color: var(--primary);
     color: var(--primary);
-    background: var(--primary-glow);
+}
+
+.suggestions-title {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+/* Quick Actions */
+.chat-quick-actions {
+    padding: 12px 16px;
+    background: linear-gradient(135deg, rgba(13, 148, 136, 0.1) 0%, rgba(6, 95, 70, 0.1) 100%);
+    border-top: 1px solid var(--border);
+}
+
+.quick-actions-title {
+    font-size: 13px;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.quick-action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.quick-action-btn {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.quick-action-btn:hover {
+    border-color: var(--primary);
+    background: var(--primary-lightest);
+    transform: translateY(-1px);
 }
 
 .chat-widget-input {
